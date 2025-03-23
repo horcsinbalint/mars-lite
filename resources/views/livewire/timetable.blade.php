@@ -11,8 +11,6 @@ $rowCount = $lastHour - $firstHour;
 $dayCount = $firstDay->diffInDays($lastDay)+1;
 $columnWidth = 100.0 / ($dayCount * $itemCount);
 
-// the height of the colorful part itself
-$absoluteHeight = $isPrintVersion ? '650px' : '1000px';
 @endphp
 
 @push('scripts')
@@ -62,148 +60,139 @@ $absoluteHeight = $isPrintVersion ? '650px' : '1000px';
     </div>
     @endif
 
-    <table style="table-layout: fixed;">
-        <thead>
-            @if($isPrintVersion || $dayCount > 1)
-            <tr>
-                <th style="width: 50px;"></th>
-                @php $day = $firstDay->copy(); @endphp
-
-                @for($i = 0; $i < $dayCount; ++$i)
-                <th style="text-align: center; width: {{95.0 / $dayCount}}%;" colspan="{{$itemCount}}"
-                    @if($day->isToday())
-                    class="coli blue white-text"
-                    @endif
-                >
-                    @if($isPrintVersion)
-                    {{$day->isoFormat('dddd')}}
-                    @else
-                    {{$day->isoFormat('MM.DD. (dddd)');}}
-                    @endif
-                </th>
-                @php $day->addDay(); @endphp
-                @endfor
-            </tr>
-            @endif
-            @if($displayItemNames)
-            <tr>
-                <th></th>
-
-                @for($i = 0; $i < $dayCount; ++$i)
-                @for($j = 0; $j < $itemCount; ++$j)
-                <th style="text-align: center; width: {{95.0 / ($dayCount * $itemCount)}}%;">
-                    @if($items[$j]->out_of_order)
-                    <s>
-                    @endif
-                        <a href="{{ route('reservations.items.show', $items[$j]) }}">{{ $items[$j]->name }}</a>
-                    @if($items[$j]->out_of_order)
-                    </s>
-                    @endif
-                </th>
-                @endfor
-                @endfor
-            </tr>
-            @endif
-        </thead>
-        <tbody>
-            <tr>
-                <th class="timetable-hour-column">
-                    {{-- we do this with absolute positioning
-                         so as not to depend on the height of table rows --}}
-                    <div style="position: relative; height: {{$absoluteHeight}}; width: 100%;">
-                        @for($hour = $firstHour; $hour < $lastHour; ++$hour)
-                        <div class="timetable-hour"
-                            style="position: absolute; top: {{($hour - $firstHour) * 100.0 / $rowCount}}%; width: 100%;">
-                            {{$hour}}:00
-                        </div>
-                        @endfor
+    <div class="row s12" style="margin-bottom: 0;">
+        <div class="col s1" style="padding: 0;">
+        </div>
+        <div class="col s11" style="padding: 0; display: flex; justify-content: space-between;">
+            @for($day = 0; $day < $dayCount; ++$day)
+                @for($item_index = 0; $item_index < $itemCount; ++$item_index)
+                @php
+                $currentDay = $firstDay->copy();
+                $currentDay->addDays($day);
+                $item = $items[$item_index];
+                @endphp
+                <div style="padding: 0; width: {{100.0 / ($dayCount * $itemCount)}}%;">
+                    <div style="text-align: center; width: 100%;padding: 0; padding: 1em;"
+                        @if($dayCount > 1 && $currentDay->isToday())
+                            class="coli blue white-text"
+                        @endif
+                    >
+                        @if($dayCount > 1)
+                            <strong><span class="date">{{$firstDay->copy()->addDays($day)->isoFormat('MM.DD.')}} (</span>{{$firstDay->copy()->addDays($day)->isoFormat('dddd')}}<span class="date">)</span></strong>
+                        @else
+                            <a href="{{ route('reservations.items.show', $item) }}">
+                                {{$item->name}}
+                            </a>
+                        @endif
                     </div>
-                </th>
-                <td colspan="{{$dayCount*$itemCount}}" style="padding:0">
-                    {{-- the panel itself --}}
-                    <div style="position: relative; height: {{$absoluteHeight}}; margin: 0;">
-                        @for($i = 0; $i < $itemCount; ++$i)
-                            @php
-                            $item = $items[$i];
-                            @endphp
-                            @foreach($this->blocks[$i] as $block)
-                                @php
-                                $isReservation = !$block->isFree();
-                                $isDisabled = !$isReservation &&
-                                                ($item->isOutOfOrder() || $block->getUntil() < \Carbon\Carbon::now());
-                                // here, we assume that $from is a midnight date
-                                $dayOfWeek = floor($firstDay->diffInDays($block->getFrom()));
-                                $startHourFloat = $block->getFrom()->hour + ($block->getFrom()->minute / 60.0);
-                                $endHourFloat = $block->getUntil()->isMidnight()
-                                                ? 24.0
-                                                : ($block->getUntil()->hour + ($block->getUntil()->minute / 60.0));
-                                @endphp
-                                @if($isReservation)
-                                <a href="{{ route('reservations.show', $block->reservation()) }}">
-                                @elseif(!$isDisabled && user()->can('requestReservation', $item))
-                                {{-- default values as GET request parameters --}}
-                                <a href="{{ route('reservations.create', ['item' => $item])
-                                            . "?from={$block->getFrom()}&until={$block->getUntil()}"
-                                }}">
-                                @endif
-                                    @php
-                                    if ($isReservation) {
-                                        $reservation = $block->reservation();
-                                        $isOurs = $reservation->user?->is(user());
-                                    } else {
-                                        $reservation = null;
-                                        $isOurs = null;
-                                    }
-
-                                    // we have to calculate this relatively to the first and last hours
-                                    $top = ($startHourFloat - $firstHour) * 100.0 / $rowCount;
-                                    $height = ($endHourFloat - $startHourFloat) * 100.0 / $rowCount;
-                                    $display = 'block';
-                                    if ($top < 0) {
-                                        $height += $top;
-                                        $top = 0;
-                                        if ($height < 0) $display = 'none';
-                                    } else if ($top >= 100.0) {
-                                        $display = 'none';
-                                    }
-                                    if ($top + $height > 100.0) $height = 100.0 - $top;
-                                    @endphp
-                                    <div style="position: absolute;
-                                                left: {{($dayOfWeek * $itemCount + $i) * $columnWidth}}%;
-                                                width: {{$columnWidth}}%;
-                                                display: {{$display}};
-                                                top: {{$top}}%;
-                                                height: {{$height}}%;"
-                                        @class([
-                                            'timetable-block',
-                                            'valign-wrapper', 'center-align',
-                                            'red' => $isReservation && !$isOurs,
-                                            'orange' => $isOurs,
-                                            'green' => !$isReservation && !$isDisabled,
-                                            'grey' => $isDisabled,
-                                            'darken-4' => $isReservation && $reservation->verified
-                                                            || !$isReservation && !$isDisabled,
-                                            'lighten-2' => $isReservation && !$reservation->verified
-                                    ])>
-                                        @if(!is_null($reservation))
+                </div>
+                @endfor
+            @endfor
+        </div>
+    </div>
+    <div class="row s12 table_docs">
+        <div class="col s1" style="padding: 0; height: 100%;">
+            @for($hour=$firstHour; $hour <= $lastHour; ++$hour)
+                <div style="box-sizing: border-box;height: {{100.0 / ($lastHour-$firstHour+1)}}%; text-align: center;border-bottom: 0.25px solid black;border-top: 0.25px solid black;border-right: 1px solid black;">
+                    {{$hour}}:00
+                </div>
+            @endfor
+        </div>
+        <div class="col s11" style="padding: 0; height: 100%; display: flex; justify-content: space-between;">
+            <script>
+                console.log("{{$dayCount}}");
+            </script>
+            @for($day = 0; $day < $dayCount; ++$day)
+                @for($item_index = 0; $item_index < $itemCount; ++$item_index)
+                @php
+                $item = $items[$item_index];
+                @endphp
+                <div style="padding: 0; height: 100%; width: {{100.0 / ($dayCount * $itemCount)}}%;">
+                    @foreach($this->blocks[$item_index] as $block)
+                        @php
+                            $isReservation = !$block->isFree();
+                            $isDisabled = !$isReservation && ($item->isOutOfOrder() || $block->getUntil() < \Carbon\Carbon::now());
+                            if ($isReservation) {
+                                $reservation = $block->reservation();
+                                $isOurs = $reservation->user?->is(user());
+                            } else {
+                                $reservation = null;
+                                $isOurs = null;
+                            }
+                        @endphp
+                        @if(floor($firstDay->diffInDays($block->getFrom())) == $day)
+                            @if($isReservation)
+                                <a href="{{ route('reservations.show', $block->reservation()) }}"
+                                    style="text-decoration: none;">
+                                    <div style="height: {{ $block->lengthInSeconds()/($lastHour-$firstHour+1)/3600.0*100 }}%; width: 100%;;padding: 0;"
+                                    @class([
+                                                        'timetable-block',
+                                                        'valign-wrapper', 'center-align',
+                                                        'red' => $isReservation && !$isOurs,
+                                                        'orange' => $isOurs,
+                                                        'green' => !$isReservation && !$isDisabled,
+                                                        'grey' => $isDisabled,
+                                                        'darken-4' => $isReservation && $reservation->verified
+                                                                        || !$isReservation && !$isDisabled,
+                                                        'lighten-2' => $isReservation && !$reservation->verified
+                                                ])>
+                                        @if($isReservation)
                                             {{$reservation->displayName()}}
                                             @if($isPrintVersion)
-                                                (
-                                                    {{ $block->getFrom()->isoFormat('HH:mm') }}
+                                                ({{ $block->getFrom()->isoFormat('HH:mm') }}
                                                     –
-                                                    {{ $block->getUntil()->isoFormat('HH:mm') }}
-                                                )
+                                                    {{ $block->getUntil()->isoFormat('HH:mm') }})
                                             @endif
                                         @endif
                                     </div>
-                                @if($isReservation || (!$isDisabled && user()->can('requestReservation', $item)))
                                 </a>
-                                @endif
-                            @endforeach
-                        @endfor
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                            @elseif(!$isDisabled && user()->can('requestReservation', $item))
+                                <a href="{{ route('reservations.create', ['item' => $item])
+                                            . "?from={$block->getFrom()}&until={$block->getUntil()}"
+                                    }}"
+                                    style="text-decoration: none;">
+                                    <div style="height: {{ $block->lengthInSeconds()/($lastHour-$firstHour+1)/3600.0*100 }}%; width: 100%;;padding: 0;"
+                                    @class([
+                                                        'timetable-block',
+                                                        'valign-wrapper', 'center-align',
+                                                        'red' => $isReservation && !$isOurs,
+                                                        'orange' => $isOurs,
+                                                        'green' => !$isReservation && !$isDisabled,
+                                                        'grey' => $isDisabled,
+                                                        'darken-4' => $isReservation && $reservation->verified
+                                                                        || !$isReservation && !$isDisabled,
+                                                        'lighten-2' => $isReservation && !$reservation->verified
+                                                ])>
+                                        @if($isReservation)
+                                            {{$reservation->displayName()}}
+                                            @if($isPrintVersion)
+                                                ({{ $block->getFrom()->isoFormat('HH:mm') }}
+                                                    –
+                                                    {{ $block->getUntil()->isoFormat('HH:mm') }})
+                                            @endif
+                                        @endif
+                                    </div>
+                                </a>
+                            @else
+                                <div style="height: {{ $block->lengthInSeconds()/($lastHour-$firstHour+1)/3600.0*100 }}%; width: 100%;;padding: 0;"
+                                @class([
+                                                    'timetable-block',
+                                                    'valign-wrapper', 'center-align',
+                                                    'red' => $isReservation && !$isOurs,
+                                                    'orange' => $isOurs,
+                                                    'green' => !$isReservation && !$isDisabled,
+                                                    'grey' => $isDisabled,
+                                                    'darken-4' => $isReservation && $reservation->verified
+                                                                    || !$isReservation && !$isDisabled,
+                                                    'lighten-2' => $isReservation && !$reservation->verified
+                                            ])>
+                                </div>
+                            @endif
+                        @endif
+                    @endforeach
+                </div>
+                @endfor
+            @endfor
+        </div>
+    </div>
 </div>

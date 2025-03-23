@@ -11,7 +11,6 @@ use Illuminate\Validation\Rule;
 use Illuminate\Database\Query\Builder;
 
 use Carbon\Carbon;
-use Carbon\CarbonImmutable;
 
 use App\Enums\ReservableItemType;
 use App\Models\User;
@@ -80,8 +79,8 @@ class ReservationController extends \App\Http\Controllers\Controller
     private static function hasConflict(Reservation $newReservation): ?Reservation
     {
         $conflictingReservations = $newReservation->reservableItem->reservationsInSlot(
-            CarbonImmutable::make($newReservation->reserved_from),
-            CarbonImmutable::make($newReservation->reserved_until)
+            Carbon::make($newReservation->reserved_from),
+            Carbon::make($newReservation->reserved_until)
         );
 
         return ($conflictingReservations

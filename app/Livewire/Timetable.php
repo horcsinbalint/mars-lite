@@ -5,21 +5,22 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Carbon\Carbon;
-use Carbon\CarbonImmutable;
 
 use App\Models\Reservations\ReservableItem;
 use App\Models\Reservations\Reservation;
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * A helper class representing a rectangle in the timetable,
- * based on CarbonImmutable instances
+ * based on Carbon instances
  * so that it cannot be accidentally modified
  * via outside references.
  */
 class Block
 {
-    private CarbonImmutable $from;
-    private CarbonImmutable $until;
+    private Carbon $from;
+    private Carbon $until;
 
     /**
      * The id of the reservation the block belongs to,
@@ -33,7 +34,7 @@ class Block
      * Throws an InvalidArgumentException
      * if $from >= $until.
      */
-    public function __construct(CarbonImmutable $from, CarbonImmutable $until, ?int $reservation_id)
+    public function __construct(Carbon $from, Carbon $until, ?int $reservation_id)
     {
         if ($from >= $until) {
             throw new \InvalidArgumentException("start date of block not earlier than end date: $from, $until");
@@ -48,7 +49,7 @@ class Block
      * Setter for the start date.
      * Throws if the new value would be later than or equal to the current end date.
      */
-    public function setFrom(CarbonImmutable $from): void
+    public function setFrom(Carbon $from): void
     {
         if ($from >= $this->until) {
             throw new \InvalidArgumentException("new start date is not earlier than current end date: $from, {$this->until}");
@@ -60,7 +61,7 @@ class Block
      * Setter for the end date.
      * Throws if the new value would be earlier than or equal to the current start date.
      */
-    public function setUntil(CarbonImmutable $until): void
+    public function setUntil(Carbon $until): void
     {
         if ($until <= $this->from) {
             throw new \InvalidArgumentException("new end date is not later than current start date: {$this->from}, $until");
@@ -71,14 +72,14 @@ class Block
     /**
      * Returns the start date.
      */
-    public function getFrom(): CarbonImmutable
+    public function getFrom(): Carbon
     {
         return $this->from;
     }
     /**
      * Returns the end date.
      */
-    public function getUntil(): CarbonImmutable
+    public function getUntil(): Carbon
     {
         return $this->until;
     }
@@ -89,6 +90,12 @@ class Block
     {
         return $this->reservation_id;
     }
+
+    public function lengthInSeconds(): int
+    {
+        return $this->from->diffInSeconds($this->until);
+    }
+
     /**
      * The reservation the block belongs to (or null if none).
      * Throws if the id is not null and not valid.
@@ -118,7 +125,7 @@ class Block
      * The new block has the same reservation id.
      * Throws \InvalidArgumentException if the given date is not inside the interval.
      */
-    public function splitAt(CarbonImmutable $middle): Block
+    public function splitAt(Carbon $middle): Block
     {
         try {
             $newBlock = new Block($middle, $this->until, $this->reservation_id);
@@ -178,12 +185,13 @@ class Timetable extends Component
      */
     public function getBlocksProperty(): array
     {
+        Log::debug(var_export($this->items, true));
         return array_map(
             fn (ReservableItem $item) =>
                 self::listOfBlocks(
                     $item,
-                    CarbonImmutable::make($this->firstDay),
-                    CarbonImmutable::make($this->lastDay->copy()->addDay()),
+                    Carbon::make($this->firstDay),
+                    Carbon::make($this->lastDay->copy()->addDay()),
                     $this->isPrintVersion
                 ),
             $this->items
@@ -193,8 +201,11 @@ class Timetable extends Component
     /**
      * Generates an ordered array of blocks for the given item in the given timespan.
      */
-    private static function listOfBlocks(ReservableItem $item, CarbonImmutable $from, CarbonImmutable $until, bool $isPrintVersion): array
+    private function listOfBlocks(ReservableItem $item, Carbon $from, Carbon $until, bool $isPrintVersion): array
     {
+        \DB::enableQueryLog();
+        Log::debug(var_export([$item->reservationsInSlot($from, $until),
+        $from, $until, \DB::getQueryLog()], true));
         // for some reason, filtering messes up the indices; hence the use of array_values
         $reservations = array_values(
             $item->reservationsInSlot($from, $until)
@@ -202,16 +213,14 @@ class Timetable extends Component
                 if (!user()->can('view', $reservation)) {
                     return false;
                 } elseif ($isPrintVersion) {
-                    return $reservation->verified
-                        && $reservation->isRecurring()
-                        && (7 == $reservation->group->frequency
-                            || 1 == $reservation->group->frequency);
+                    return $reservation->verified && $reservation->isRecurring();
                 } else {
                     return true;
                 }
             })
             ->all()
         );
+
 
         $blocks = [];
         $isForReservation = 0 < count($reservations) && $reservations[0]->reserved_from <= $from;
@@ -222,15 +231,15 @@ class Timetable extends Component
             if ($isForReservation) {
                 $reservation = $reservations[$i];
                 $blocks[] = new Block(
-                    from: CarbonImmutable::make($reservation->reserved_from),
-                    until: CarbonImmutable::make($reservation->reserved_until),
+                    from: Carbon::make($reservation->reserved_from),
+                    until: Carbon::make($reservation->reserved_until),
                     reservation_id: $reservation->id
                 );
-                $currentStart = CarbonImmutable::make($reservation->reserved_until);
+                $currentStart = Carbon::make($reservation->reserved_until);
                 $isForReservation = false;
                 ++$i;
             } else {
-                $currentEnd = CarbonImmutable::make($reservations[$i]->reserved_from);
+                $currentEnd = Carbon::make($reservations[$i]->reserved_from);
                 if ($currentStart < $currentEnd) {
                     $blocks[] = new Block(
                         from: $currentStart,
@@ -258,7 +267,7 @@ class Timetable extends Component
         // we have to do it here because we can be sure here that at least one element exists
         $blocks[0]->setFrom($from);
 
-        return self::splitBlocks($blocks);
+        return $this->splitBlocks($blocks);
     }
 
     /**
@@ -266,7 +275,7 @@ class Timetable extends Component
      * and splits those that spill through midnights.
      * Free blocks also get split every hour.
      */
-    private static function splitBlocks(array $blocks): array
+    private function splitBlocks(array $blocks): array
     {
         $result = [];
         $i = 0;
@@ -279,17 +288,22 @@ class Timetable extends Component
                 $splittingPointAfter->minute = 0;
                 $splittingPointAfter->addHours(1);
             } else {
-                $splittingPointAfter->hour = 0;
+                $splittingPointAfter->hour = $this->lastHour+1;
                 $splittingPointAfter->minute = 0;
-                $splittingPointAfter->addDays(1);
+                if($splittingPointAfter <= $block->getFrom()){
+                    $splittingPointAfter->hour = 0;
+                    $splittingPointAfter->addDay(1);
+                }
             }
 
             if ($block->getUntil() <= $splittingPointAfter) {
-                $result[] = $block;
                 ++$i;
             } else {
                 // that array won't be used for anything else anyway
-                $blocks[$i] = $block->splitAt(CarbonImmutable::make($splittingPointAfter));
+                $blocks[$i] = $block->splitAt(Carbon::make($splittingPointAfter));
+            }
+            if($block->getFrom()->hour >= $this->firstHour &&
+                $block->getFrom()->hour <= $this->lastHour) {
                 $result[] = $block;
             }
         }
@@ -310,7 +324,7 @@ class Timetable extends Component
         array $items,
         int $days,
         int $firstHour = 0,
-        int $lastHour = 24,
+        int $lastHour = 23,
         bool $displayItemNames = false,
         bool $isPrintVersion = false
     ) {
@@ -350,8 +364,8 @@ class Timetable extends Component
      */
     public function step(int $days): void
     {
-        $this->firstDay->addDays($days);
         $this->lastDay->addDays($days);
+        $this->firstDay->addDays($days);
     }
 
     /**
