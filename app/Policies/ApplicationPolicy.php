@@ -82,7 +82,6 @@ class ApplicationPolicy
         return $user->hasRole([
             Role::SECRETARY,
             Role::DIRECTOR,
-            Role::WORKSHOP_LEADER,
             Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS
         ]);
     }

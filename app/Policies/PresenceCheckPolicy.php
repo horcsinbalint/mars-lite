@@ -13,12 +13,12 @@ class PresenceCheckPolicy
 
     /**
      * Whether a user can cast a vote in a certain question.
-     * For this, the user has to be an active collegist, the question has to be open
+     * For this, the user has to be a collegist (passive collegists are not forbidden from being present), the question has to be open
      * and the user must not have voted in the question.
     */
     public function signPresence(User $user, PresenceCheck $presence): bool
     {
-        return $presence->isOpen() && $user->isCollegist(alumni: false) && $user->isActive() && !$presence->signedPresence($user);
+        return $presence->isOpen() && $user->isCollegist(alumni: false) && !$presence->signedPresence($user);
     }
 
     /**

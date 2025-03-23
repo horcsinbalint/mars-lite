@@ -41,7 +41,7 @@ class SemesterEvaluationPolicy
             Role::SYS_ADMIN,
             Role::DIRECTOR,
             Role::SECRETARY,
-            Role::STUDENT_COUNCIL => Role::PRESIDENT,
+            Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS,
             Role::STUDENT_COUNCIL_SECRETARY
         ]);
     }

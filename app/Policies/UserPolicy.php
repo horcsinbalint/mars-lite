@@ -207,7 +207,7 @@ class UserPolicy
         if ($role->name == Role::APPLICATION_COMMITTEE_MEMBER) {
             return $user->roleWorkshops->contains($object->id)
                     || $user->hasRole([
-                        Role::STUDENT_COUNCIL => [Role::PRESIDENT, Role::SCIENCE_VICE_PRESIDENT]
+                        Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS
                     ]);
         }
 
@@ -225,7 +225,7 @@ class UserPolicy
             ) || $user->hasRole([
                 Role::STUDENT_COUNCIL_SECRETARY,
                 Role::SECRETARY,
-                Role::STUDENT_COUNCIL => Role::SCIENCE_VICE_PRESIDENT
+                Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS
             ]);
         }
 
@@ -272,7 +272,7 @@ class UserPolicy
         if (!$target->isCollegist()) {
             return false;
         }
-        if ($user->hasRole(Role::SECRETARY) || $user->hasRole([Role::STUDENT_COUNCIL => Role::SCIENCE_VICE_PRESIDENT])) {
+        if ($user->hasRole(Role::SECRETARY) || $user->hasRole([Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS])) {
             return true;
         }
         return $user->roleWorkshops->intersect($target->workshops)->count() > 0;

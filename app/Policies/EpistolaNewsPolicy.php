@@ -11,6 +11,19 @@ class EpistolaNewsPolicy
     use HandlesAuthorization;
 
     /**
+     * bypass for admins
+     *
+     * @param User $user
+     * @return bool|void
+     */
+    public function before(User $user)
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+    }
+
+    /**
      * Determine whether the user can view any epistola news.
      * @param User $user
      * @return bool
