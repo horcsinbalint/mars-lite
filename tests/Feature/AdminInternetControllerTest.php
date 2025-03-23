@@ -64,38 +64,6 @@ class AdminInternetControllerTest extends TestCase
         $response->assertStatus(403);
     }
 
-
-    /**
-     * Test that a user can not index the wifi connections.
-     */
-    public function test_can_not_index_wifi_connections(): void
-    {
-        $response = $this->actingAs($this->user)->get(route('internet.wifi_connections.index'));
-
-        $response->assertStatus(403);
-    }
-
-    /**
-     * Test that an admin can index the wifi connections.
-     */
-    public function test_index_wifi_connections(): void
-    {
-        $this->user->internetAccess->wifiConnections()->create([
-            'ip' => '192.168.0.1',
-            'mac_address' => '01:23:45:67:89:AB',
-            'note' => 'My note'
-        ]);
-
-        $response = $this->actingAs($this->admin)->get(route('internet.wifi_connections.index'));
-
-        $response->assertStatus(200);
-        $response->assertJsonFragment([
-            'mac_address' => '01:23:45:67:89:AB',
-            'ip' => '192.168.0.1',
-            'note' => 'My note',
-        ]);
-    }
-
     /**
      * Test that an admin can extend an internet access.
      */

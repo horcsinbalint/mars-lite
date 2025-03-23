@@ -12,7 +12,6 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Internet\MacAddress;
 use App\Models\PrintJob;
-use App\Models\Internet\WifiConnection;
 use App\Models\PrintAccount;
 use App\Models\PersonalInformation;
 use App\Models\EducationalInformation;
@@ -97,7 +96,6 @@ class UsersTableSeeder extends Seeder
         $user->roles()->attach(Role::collegist()->id, ['object_id' => RoleObject::firstWhere('name', Role::RESIDENT)->id]);
         $user->roles()->attach(Role::sysAdmin()->id);
         $wifi_username = $user->internetAccess->setWifiCredentials();
-        WifiConnection::factory($user->id % 5)->create(['wifi_username' => $wifi_username]);
         Checkout::query()->update(['handler_id' => $user->id]);
     }
 
@@ -122,7 +120,6 @@ class UsersTableSeeder extends Seeder
         $this->attachFaculties($user);
 
         $wifi_username = $user->internetAccess->setWifiCredentials();
-        WifiConnection::factory($user->id % 5)->create(['wifi_username' => $wifi_username]);
         $this->attachStudyLines($user);
         for ($x = 0; $x < rand(1, 3); $x++) {
             $workshop = rand(1, count(Workshop::ALL));
@@ -163,7 +160,6 @@ class UsersTableSeeder extends Seeder
     {
         $user->roles()->attach(Role::get(Role::TENANT)->id);
         $wifi_username = $user->internetAccess->setWifiCredentials();
-        WifiConnection::factory($user->id % 5)->create(['wifi_username' => $wifi_username]);
         MacAddress::factory()->count($user->id % 5)->create(['user_id' => $user->id]);
     }
 

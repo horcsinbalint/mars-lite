@@ -1,8 +1,8 @@
 version: '3'
 
 services:
-  mars_mysql:
-    container_name: mars_mysql
+  mars_lite_mysql:
+    container_name: mars_lite_mysql
     image: mysql:8.3
     environment:
       MYSQL_DATABASE: 'mars'
@@ -14,19 +14,18 @@ services:
     expose:
       - '3306'
     volumes:
-      - mars_db:/var/lib/mysql
-  mars_dev:
-    container_name: mars_dev
-    image: mars_image:latest
+      - mars_lite_db:/var/lib/mysql
+  mars_lite_dev:
+    container_name: mars_lite_dev
     pull_policy: never
     build:
       context: ./docker-dev-setup
     depends_on:
-      - mars_mysql
+      - mars_lite_mysql
     volumes:
       - ".:/workspace/mars"
     ports:
       - '127.0.0.1:8000:8000'
 
 volumes:
-  mars_db:
+  mars_lite_db:

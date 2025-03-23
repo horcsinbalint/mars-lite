@@ -11,7 +11,6 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class RegisterController extends Controller
@@ -124,7 +123,6 @@ class RegisterController extends Controller
                 foreach (User::admins() as $admin) {
                     Mail::to($admin)->send(new NewRegistration($admin->name, $user));
                 }
-                Cache::increment('user');
                 $this->redirectTo = '/verification';
             } else {
                 $user->application()->create();

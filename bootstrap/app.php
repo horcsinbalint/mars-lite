@@ -6,7 +6,6 @@ use App\Http\Middleware\NotifyAboutEvaluation;
 use App\Http\Middleware\RedirectTenantsToUpdate;
 use App\Jobs\PeriodicEventsProcessor;
 use App\Jobs\PingRouters;
-use App\Jobs\ProcessWifiConnections;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -50,15 +49,5 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->job(new PingRouters())->everyFiveMinutes()->onFailure(function () {
             Log::error('Error pinging routers');
         });
-
-        $schedule->job(new ProcessWifiConnections())->dailyAt('01:00')->onFailure(function () {
-            Log::error('Error processing wifi connections.');
-        }); //FIXME: remove
-        $schedule->command('backup:clean')->daily()->at('01:00')->onFailure(function () {
-            Log::error('Error cleaning the a backup.');
-        }); //FIXME: remove
-        $schedule->command('backup:run --only-db')->daily()->at('01:30')->onFailure(function () {
-            Log::error('Error creating a backup.');
-        }); //FIXME: remove
     })
     ->create();

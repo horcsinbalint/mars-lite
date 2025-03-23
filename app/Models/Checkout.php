@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * App\Models\Checkout
@@ -92,23 +91,19 @@ class Checkout extends Model
     }
 
     /**
-     * @return Checkout the admin checkout from cache
+     * @return Checkout the admin checkout
      */
     public static function admin(): Checkout
     {
-        return Cache::remember('checkout.'.self::ADMIN, 86400, function () {
-            return self::where('name', self::ADMIN)->firstOrFail();
-        });
+        return self::where('name', self::ADMIN)->firstOrFail();;
     }
 
     /**
-     * @return Checkout the student council's checkout from cache
+     * @return Checkout the student council's checkout
      */
     public static function studentsCouncil(): Checkout
     {
-        return Cache::remember('checkout.'.self::STUDENTS_COUNCIL, 86400, function () {
-            return self::where('name', self::STUDENTS_COUNCIL)->firstOrFail();
-        });
+        return self::where('name', self::STUDENTS_COUNCIL)->firstOrFail();;
     }
 
     public function kktSum(Semester $semester): int

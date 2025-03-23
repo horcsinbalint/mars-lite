@@ -7,7 +7,6 @@ use App\Models\RoleObject;
 use App\Models\User;
 use App\Models\Workshop;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Support\Facades\Cache;
 
 class UserPolicy
 {
@@ -98,14 +97,12 @@ class UserPolicy
             return true;
         }
         if ($target->isCollegist()) {
-            return (Cache::remember($user->id . '_is_secretary/director/s_council', 60, function () use ($user) {
-                return $user->hasRole([
+            return ( $user->hasRole([
                     Role::SECRETARY,
                     Role::DIRECTOR,
                     Role::STUDENT_COUNCIL => array_merge(Role::STUDENT_COUNCIL_LEADERS, Role::COMMITTEE_LEADERS),
                     Role::STUDENT_COUNCIL_SECRETARY,
-                ]);
-            })) || $target->workshops
+                ])) || $target->workshops
                     ->intersect($user->roleWorkshops)
                     ->count() > 0;
         } elseif ($target->hasRole(Role::TENANT)) {

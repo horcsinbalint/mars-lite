@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Network;
 
 use App\Http\Controllers\Controller;
 use App\Models\Internet\InternetAccess;
-use App\Models\Internet\WifiConnection;
 use App\Utils\TabulatorPaginator;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -50,27 +49,6 @@ class AdminInternetController extends Controller
             ->filterable(['auto_approved_mac_slots', 'has_internet_until', 'user.name'])
             ->paginate();
 
-    }
-
-    /**
-     * Get paginated wifi connections data.
-     * @param Request $request
-     * @return LengthAwarePaginator
-     * @throws AuthorizationException
-     */
-    public function indexWifi(Request $request): LengthAwarePaginator
-    {
-        $this->authorize('viewAny', WifiConnection::class);
-
-        return TabulatorPaginator::from(
-            WifiConnection::query()
-                ->groupBy(['wifi_username', 'mac_address', 'ip', 'lease_start', 'lease_end', 'note'])
-                ->select(['wifi_username', 'mac_address', 'ip', 'lease_start', 'lease_end', 'note',
-                    DB::raw('COUNT(*) as radius_connections')])
-        )
-            ->sortable(['wifi_username', 'mac_address', 'ip', 'lease_start'])
-            ->filterable(['wifi_username', 'mac_address', 'ip', 'lease_start'])
-            ->paginate();
     }
 
 

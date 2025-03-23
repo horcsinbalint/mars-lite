@@ -13,13 +13,13 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
 class GuestsController extends Controller
 {
+
     /**
      * Display the list of users waiting for approval.
      * @return View
@@ -28,13 +28,7 @@ class GuestsController extends Controller
     public function index()
     {
         $this->authorize('handleGuests', User::class);
-        $users = User::withoutGlobalScope('verified')
-            ->where('verified', false)
-            ->whereHas('roles', function (Builder $query) {
-                $query->where('name', Role::TENANT);
-            })
-            ->with(['personalInformation'])
-            ->get();
+        $users = User::guestsWaitingForValidation();
 
         return view('secretariat.registrations.list', ['users' => $users]);
     }
@@ -49,10 +43,7 @@ class GuestsController extends Controller
     {
         $this->authorize('handleGuests', User::class);
 
-        $user = User::withoutGlobalScope('verified')->findOrFail($request->id);
-        if ($user->verified) {
-            return redirect()->route('secretariat.registrations');
-        }
+        $user = User::guestsWaitingForValidation()->findOrFail($request->id);
 
         $user->update(['verified' => true]);
         if ($user->hasRole(Role::TENANT)) {
@@ -60,8 +51,6 @@ class GuestsController extends Controller
             $user->internetAccess()->update(['has_internet_until' => $date]);
             $user->personalInformation()->update(['tenant_until' => $date]);
         }
-
-        Cache::decrement('user');
 
         Mail::to($user)->queue(new ApprovedRegistration($user->name));
 
@@ -78,14 +67,9 @@ class GuestsController extends Controller
     {
         $this->authorize('handleGuests', User::class);
 
-        $user = User::withoutGlobalScope('verified')->findOrFail($request->id);
-        if ($user->verified) {
-            return redirect()->route('secretariat.registrations');
-        }
+        $user = User::guestsWaitingForValidation()->findOrFail($request->id);
 
         $user->delete();
-
-        Cache::decrement('user');
 
         return redirect()->route('secretariat.registrations')->with('message', __('general.successful_modification'));
     }

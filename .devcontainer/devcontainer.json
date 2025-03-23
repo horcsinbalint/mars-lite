@@ -1,10 +1,10 @@
 // https://aka.ms/devcontainer.json
 {
-	"name": "Mars development",
+	"name": "Mars Lite",
 	"dockerComposeFile": [
 		"../docker-compose.yml"
 	],
-	"service": "mars_dev",
+	"service": "mars_lite_dev",
 	"workspaceFolder": "/workspace/mars",
 	"customizations": {
 		"vscode": {

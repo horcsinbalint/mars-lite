@@ -22,7 +22,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -466,7 +465,6 @@ class UserController extends Controller
         $user->personalInformation()->update(['tenant_until' => null]);
         $user->removeRole(Role::get(Role::TENANT));
         $user->application()->create();
-        Cache::forget('collegists');
         return redirect(route('application'));
     }
 }

@@ -15,7 +15,7 @@ return [
 
     'name' => env('APP_NAME', 'Urán'),
 
-    'version' => '3.19', // update on release
+    'version' => file_get_contents(base_path('version.hash')),
 
     'logo_blue_path' => env('APP_ENV', "local") != "production" ? '/img/mars.png' : '/img/uran_blue.png',
 
@@ -107,12 +107,6 @@ return [
     'locale' => 'hu',
     'locales' => [
         'en' => 'A - English',
-        'la' => 'L - Latina',
-        'fr' => 'F - Français',
-        'it' => 'O - Italiano',
-        'de' => 'N - Deutsch',
-        'sp' => 'S - Español',
-        'gr' => 'Ó - Ελληνικά',
         'hu' => 'M - Magyar',
     ],
     'alfonso_languages' => [
