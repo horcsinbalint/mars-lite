@@ -12,6 +12,19 @@ class CommunityServicePolicy
 {
     use HandlesAuthorization;
 
+    /**
+     * bypass for admins
+     *
+     * @param User $user
+     * @return bool|void
+     */
+    public function before(User $user)
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+    }
+
 
     /**
      * Determine whether the user can view any community services.
@@ -40,7 +53,7 @@ class CommunityServicePolicy
      */
     public function approveAny(User $user)
     {
-        return $user->hasRole([Role::STUDENT_COUNCIL]);
+        return $user->hasRole([Role::STUDENT_COUNCIL => array_merge(Role::STUDENT_COUNCIL_LEADERS, Role::COMMITTEE_LEADERS)]);
     }
 
     /**

@@ -12,6 +12,19 @@ class CheckoutPolicy
     use HandlesAuthorization;
 
     /**
+     * Should not be able to bypassed by admins.
+     *
+     * @param User $user
+     * @return bool|void
+     */
+    public function before(User $user)
+    {
+        /*if ($user->isAdmin()) {
+            return true;
+        }*/
+    }
+
+    /**
      * Determine whether the user can view the checkout.
      */
     public function view(User $user, Checkout $checkout): bool

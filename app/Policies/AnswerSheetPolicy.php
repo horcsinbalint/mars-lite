@@ -18,6 +18,10 @@ class AnswerSheetPolicy
     public function administer(User $user): bool
     {
         return $user->isAdmin()
-          || $user->hasRole(Role::STUDENT_COUNCIL);
+          || $user->hasRole(
+            [
+                Role::STUDENT_COUNCIL_SECRETARY,
+                Role::STUDENT_COUNCIL => array_merge(Role::STUDENT_COUNCIL_LEADERS, Role::COMMITTEE_LEADERS)
+            ]);
     }
 }

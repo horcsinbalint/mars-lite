@@ -7,6 +7,20 @@ use App\Models\Role;
 
 class GeneralAssemblyPolicy
 {
+
+    /**
+     * bypass for admins
+     *
+     * @param User $user
+     * @return bool|void
+     */
+    public function before(User $user)
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+    }
+
     /**
      * Determine whether the user can view any general_assemblies.
      *
@@ -15,7 +29,7 @@ class GeneralAssemblyPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isCollegist(alumni: false) || $user->isAdmin() || $user->hasRole(Role::SECRETARY);
+        return $user->isCollegist(alumni: false) || $user->hasRole(Role::SECRETARY);
     }
 
     /**
@@ -23,6 +37,6 @@ class GeneralAssemblyPolicy
      */
     public function administer(User $user)
     {
-        return $user->hasRole([Role::SYS_ADMIN, Role::STUDENT_COUNCIL => Role::PRESIDENT, Role::STUDENT_COUNCIL_SECRETARY]);
+        return $user->hasRole([Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS, Role::STUDENT_COUNCIL_SECRETARY]);
     }
 }

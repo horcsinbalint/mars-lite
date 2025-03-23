@@ -13,12 +13,12 @@ class QuestionPolicy
 
     /**
      * Whether a user can cast a vote in a certain question.
-     * For this, the user has to be an active collegist, the question has to be open
+     * For this, the user has to be a collegist (passive collegists are not forbidden from being present), the question has to be open
      * and the user must not have voted in the question.
      */
     public function vote(User $user, Question $question): bool
     {
-        return $question->isOpen() && $user->isCollegist(alumni: false) && $user->isActive() && !$question->hasVoted($user);
+        return $question->isOpen() && $user->isCollegist(alumni: false) && !$question->hasVoted($user);
     }
 
     /**
