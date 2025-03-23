@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Builder;
 
 use Carbon\Carbon;
-use Carbon\CarbonImmutable;
 
 use App\Enums\ReservableItemType;
 use App\Models\User;
@@ -99,7 +98,7 @@ class ReservableItem extends Model
      * Returns a query of reservations in a given time interval
      * (those that do not only touch it with their endpoints).
      */
-    public function reservationsInSlot(CarbonImmutable $from, CarbonImmutable $until)
+    public function reservationsInSlot(Carbon $from, Carbon $until)
     {
         return Reservation::where('reservable_item_id', $this->id)
                           ->where(function (Builder $query) use ($from, $until) {

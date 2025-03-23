@@ -297,14 +297,16 @@ body.dark a.btn {
     display: none;
 }
 
+.table_docs {
+    height: 1000px;
+}
+
 // for the colourful blocks in the timetable
 .timetable-block {
     box-sizing: border-box;
-    border-top: solid 1px black;
-    border-left: solid 1px black;
+    border: solid 1px black;
     color: white;
     font-weight: bold;
-    padding: 3px;
 }
 
 // for the th containing the hours with absolute positioning
