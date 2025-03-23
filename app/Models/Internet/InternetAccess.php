@@ -24,10 +24,8 @@ use Illuminate\Support\Str;
  * @property Carbon $has_internet_until
  * @property string $wifi_password
  * @property User $user
- * @property WifiConnection[]|Collection $wifiConnections
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read int|null $wifi_connections_count
  * @method static Builder|InternetAccess newModelQuery()
  * @method static Builder|InternetAccess newQuery()
  * @method static Builder|InternetAccess query()
@@ -62,16 +60,6 @@ class InternetAccess extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * The Wi-Fi connections that the user made.
-     *
-     * @return HasMany
-     */
-    public function wifiConnections(): HasMany
-    {
-        return $this->hasMany(WifiConnection::class, 'wifi_username', 'wifi_username');
     }
 
     /**

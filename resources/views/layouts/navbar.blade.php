@@ -254,24 +254,10 @@
 
             <!-- other -->
             @if(Auth::user()?->verified)
-                <li>
-                    <a class="collapsible-header waves-effect" style="padding-left:32px">
-                        <i class="material-icons left">more_horiz</i>@lang('general.other')
-                        <i class="material-icons right">arrow_drop_down</i></a>
-                    <div class="collapsible-body">
-                        <ul>
-                            <!-- language contributions -->
-                            <li><a href="{{ route('localizations') }}">
-                                    <i class="material-icons left">sentiment_satisfied_alt</i>@lang('localizations.help_translate')
-                                </a></li>
-
-                            <!-- report a bug -->
-                            <li><a href="{{ route('issues.create') }}">
-                                    <i class="material-icons left">sentiment_very_dissatisfied</i>@lang('issue.report')
-                                </a></li>
-                        </ul>
-                    </div>
-                </li>
+                <!-- report a bug -->
+                <li><a href="{{ route('issues.create') }}">
+                        <i class="material-icons left">sentiment_very_dissatisfied</i>@lang('issue.report')
+                    </a></li>
                 <li>
                     <a class="dark-toggle" href="#" onclick="toggleColorMode()" title="Dark/light"><i
                                 class="material-icons left">brightness_4</i>@lang('general.toggle-dark-mode')</a>

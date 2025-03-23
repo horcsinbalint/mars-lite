@@ -26,7 +26,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -89,7 +88,6 @@ use Illuminate\Support\Facades\Mail;
  * @property-read int|null $semester_statuses_count
  * @property-read int|null $transactions_paid_count
  * @property-read int|null $transactions_received_count
- * @property-read int|null $wifi_connections_count
  * @property-read int|null $workshops_count
  * @method static Builder|User canView()
  * @method static UserFactory factory(...$parameters)
@@ -726,21 +724,16 @@ class User extends Authenticatable implements HasLocalePreference
     /* Role related */
 
     /**
-     * Determine if the user is a sys admin. Uses cache.
+     * Determine if the user is a sys admin.
      * @return boolean
      */
     public function isAdmin(): bool
     {
-        return in_array(
-            $this->id,
-            Cache::remember('sys-admins', 60, function () {
-                return Role::get(Role::SYS_ADMIN)->users()->pluck('id')->toArray();
-            })
-        );
+        return $this->hasRole(Role::SYS_ADMIN);
     }
 
     /**
-     * Determine if the user is a collegist (including alumni). Uses cache.
+     * Determine if the user is a collegist (including alumni).
      * @return boolean
      */
     public function isCollegist($alumni = true): bool
@@ -749,17 +742,7 @@ class User extends Authenticatable implements HasLocalePreference
             return $this->roles()->where('role_id', Role::collegist()->id)->exists();
         }
 
-        return in_array(
-            $this->id,
-            Cache::remember('collegists', 60, function () {
-                return Role::collegist()->getUsers()->pluck('id')->toArray();
-            })
-        ) || ($alumni === true && in_array(
-            $this->id,
-            Cache::remember('alumni', 60, function () {
-                return Role::alumni()->getUsers()->pluck('id')->toArray();
-            })
-        ));
+        return $this->hasRole(Role::COLLEGIST) || ($alumni === true && $this->hasRole(Role::ALUMNI));
     }
 
     /**
@@ -771,8 +754,6 @@ class User extends Authenticatable implements HasLocalePreference
         $role = Role::collegist();
         $object = $role->getObject($objectName);
         $this->addRole($role, $object);
-
-        Cache::forget('collegists');
     }
 
     /**
@@ -1111,11 +1092,17 @@ class User extends Authenticatable implements HasLocalePreference
      */
     public static function notificationCount(): int
     {
-        return self::withoutGlobalScope('verified')
-            ->whereHas('roles', function ($q) {
-                $q->where('role_id', Role::get(Role::TENANT));
+        return self::guestsWaitingForValidation()->count();
+    }
+
+    public static function guestsWaitingForValidation() {
+        return User::withoutGlobalScope('verified')
+            ->where('verified', false)
+            ->whereHas('roles', function (Builder $query) {
+                $query->where('name', Role::TENANT);
             })
-            ->where('verified', false)->count();
+            ->with(['personalInformation'])
+            ->get();
     }
 
     /*

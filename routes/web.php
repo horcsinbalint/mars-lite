@@ -22,7 +22,6 @@ use App\Http\Controllers\Dormitory\Printing\PrintAccountController;
 use App\Http\Controllers\Dormitory\Printing\PrintAccountHistoryController;
 use App\Http\Controllers\Dormitory\RoomController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Network\AdminCheckoutController;
 use App\Http\Controllers\Network\AdminInternetController;
 use App\Http\Controllers\Network\InternetController;
@@ -116,16 +115,6 @@ Route::middleware([Authenticate::class, LogRequests::class, EnsureVerified::clas
     Route::get('/users/tenant_update/show', [UserController::class, 'showTenantUpdate'])->name('users.tenant-update.show');
     Route::post('/users/tenant_update/applicant', [UserController::class, 'tenantToApplicant'])->name('users.tenant-update.to-applicant');
 
-    /** Localization */
-    Route::get('/localizations', [LocaleController::class, 'index'])->name('localizations');
-    Route::post('/localizations/add', [LocaleController::class, 'add'])->name('localizations.add');
-    Route::middleware(['can:viewAny,App\Models\LocalizationContribution'])->group(function () {
-        Route::get('/localizations/admin', [LocaleController::class, 'indexAdmin'])->name('localizations.admin');
-        Route::post('/localizations/admin/approve', [LocaleController::class, 'approve'])->name('localizations.approve');
-        Route::post('/localizations/admin/approve_all', [LocaleController::class, 'approveAll'])->name('localizations.approve_all');
-        Route::post('/localizations/admin/delete', [LocaleController::class, 'delete'])->name('localizations.delete');
-    });
-
     /** Printing */
     Route::prefix('print')->name('print.')->group(function () {
         Route::get('/', [PrinterController::class, 'index'])->name('index');
@@ -156,7 +145,6 @@ Route::middleware([Authenticate::class, LogRequests::class, EnsureVerified::clas
         ]);
 
         Route::get('/admin', [AdminInternetController::class, 'index'])->name('admin.index');
-        Route::get('/admin/wifi_connections', [AdminInternetController::class, 'indexWifi'])->name('wifi_connections.index');
         Route::get('/admin/internet_accesses', [AdminInternetController::class, 'indexInternetAccesses'])->name('internet_accesses.index');
         Route::post('/admin/{internet_access}/extend', [AdminInternetController::class, 'extend'])->name('internet_accesses.extend');
         Route::post('/admin/{internet_access}/revoke', [AdminInternetController::class, 'revoke'])->name('internet_accesses.revoke');

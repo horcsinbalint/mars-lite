@@ -7,7 +7,6 @@ use App\Models\RoleObject;
 use App\Models\Workshop;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Helper class for role getters/setters.
@@ -159,7 +158,6 @@ trait HasRoles
                     $this->roles()->detach($role->id);
                 }
                 $this->roles()->attach($role->id, ['object_id' => $object->id]);
-                Cache::forget('collegists');
             } elseif ($this->roles()->where('id', $role->id)->wherePivot('object_id', $object->id)->doesntExist()) {
                 $this->roles()->attach($role->id, ['object_id' => $object->id]);
             }
@@ -189,13 +187,6 @@ trait HasRoles
             $this->roles()->where('roles.id', $role->id)->wherePivot('workshop_id', $object->id)->detach($role->id);
         } else {
             $this->roles()->detach($role->id);
-        }
-
-        if ($role->name == Role::COLLEGIST) {
-            Cache::forget('collegists');
-        }
-        if ($role->name == Role::SYS_ADMIN) {
-            Cache::forget('sys-admins');
         }
     }
 

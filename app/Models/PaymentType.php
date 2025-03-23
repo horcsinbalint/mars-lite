@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * App\Models\PaymentType
@@ -45,14 +44,11 @@ class PaymentType extends Model
      * ADMIN: NETREG, PRINT;
      * STUDENTS_COUNCIL: KKT, WORKSHOP_EXPENSE
      *
-     * Uses cache.
-     *
      * @param Checkout $checkout
      * @return Collection of the payment types.
      */
     public static function forCheckout(Checkout $checkout)
     {
-        return Cache::remember('paymentTypesFor.' . $checkout, 86400, function () use ($checkout) {
             $payment_types = [self::INCOME, self::EXPENSE];
             if ($checkout->name == Checkout::ADMIN) {
                 $payment_types[] = self::NETREG;
@@ -63,60 +59,57 @@ class PaymentType extends Model
             }
 
             return self::whereIn('name', $payment_types)->get();
-        });
     }
 
     public static function income(): PaymentType
     {
-        return self::getFromCache(self::INCOME);
+        return self::getPaymentType(self::INCOME);
     }
 
     public static function expense(): PaymentType
     {
-        return self::getFromCache(self::EXPENSE);
+        return self::getPaymentType(self::EXPENSE);
     }
 
     public static function kkt(): PaymentType
     {
-        return self::getFromCache(self::KKT);
+        return self::getPaymentType(self::KKT);
     }
 
     public static function netreg(): PaymentType
     {
-        return self::getFromCache(self::NETREG);
+        return self::getPaymentType(self::NETREG);
     }
 
     public static function print(): PaymentType
     {
-        return self::getFromCache(self::PRINT);
+        return self::getPaymentType(self::PRINT);
     }
 
     public static function workshopExpense(): PaymentType
     {
-        return self::getFromCache(self::WORKSHOP_EXPENSE);
+        return self::getPaymentType(self::WORKSHOP_EXPENSE);
     }
 
     /**
-     * Get the paymentType by name. Uses cache.
+     * Get the paymentType by name.
      *
      * @param string $type payment type name
      * @return PaymentType
      */
-    public static function getFromCache(string $type): PaymentType
+    public static function getPaymentType(string $type): PaymentType
     {
-        return Cache::remember('paymentType.' . $type, 86400, function () use ($type) {
-            return self::where('name', $type)->firstOrFail();
-        });
+        return self::where('name', $type)->firstOrFail();
     }
 
     /**
-     * Get the paymentType by name. Uses cache.
+     * Get the paymentType by name.
      *
      * @param string $name payment type name
      * @return PaymentType
      */
     public static function getByName(string $name): PaymentType
     {
-        return self::getFromCache($name);
+        return self::getPaymentType($name);
     }
 }

@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
 
 use App\Models\User;
@@ -258,29 +257,24 @@ class Semester extends Model
     }
 
     /**
-     * Returns the current semester from cache.
+     * Returns the current semester.
      * There is always a "current" semester. If there is not in the database, this function creates it.
      * In case the current time is in between two semesters, it is still undefined as we follow the months and not the getEndDate/getStartDate.
      */
     public static function current(): Semester
     {
         $today = Carbon::today()->format('Ymd');
-        if (!Cache::get('semester.current.' . $today)) {
-            $now = Carbon::now();
-            if ($now->month >= self::START_OF_SPRING_SEMESTER && $now->month <= self::END_OF_SPRING_SEMESTER) {
-                $part = 2;
-                $year = $now->year - 1;
-            } else {
-                $part = 1;
-                // This assumes that the semester ends in the new year.
-                $year = $now->month <= self::END_OF_AUTUMN_SEMESTER ? $now->year - 1 : $now->year;
-            }
-            $current = Semester::getOrCreate($year, $part);
-
-            Cache::put('semester.current.' . $today, $current, $seconds = 10);
+        $now = Carbon::now();
+        if ($now->month >= self::START_OF_SPRING_SEMESTER && $now->month <= self::END_OF_SPRING_SEMESTER) {
+            $part = 2;
+            $year = $now->year - 1;
+        } else {
+            $part = 1;
+            // This assumes that the semester ends in the new year.
+            $year = $now->month <= self::END_OF_AUTUMN_SEMESTER ? $now->year - 1 : $now->year;
         }
-
-        return Cache::get('semester.current.' . $today);
+        $current = Semester::getOrCreate($year, $part);
+        return $current;
     }
 
     /**

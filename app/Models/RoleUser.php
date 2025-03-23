@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * RoleUser pivot model. Represents a role assigned to a user with a roleObject or Workshop in the pivot.
@@ -74,7 +73,6 @@ class RoleUser extends Pivot
 
     /**
      * Get the role object's translated_name attribute.
-     * Uses Cache.
      *
      * @return Attribute
      */
