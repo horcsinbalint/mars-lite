@@ -13,7 +13,6 @@
                 <span class="card-title">Dokumentumok</span>
                 <blockquote>Nyomtasd ki a kívánt dokumentumot a Collegiumban kihelyezett nyomtatóval, és add le a titkárságon/portán. A költségek levonásra kerülnek.</blockquote>
                 <blockquote>Igazolásokat a titkárságtól tudsz igényelni az "Igénylés" gombra kattintva, erről a titkárság értesítést kap. Az igazolásokat a következő munkanapon veheted át. Csak az aláírt és lepecsételt igazolások érvényesek!</blockquote>
-                {{-- TODO: show printing errors --}}
                 <table>
                     <tbody>
                         @can('document.register-statement')
@@ -23,8 +22,14 @@
                             <td>
                                 <x-input.button :href="route('documents.register-statement.download')" text="letöltés" />
                             </td>
+                        </tr>
+                        @endcan
+                        @can('document.leaving-statement')
+                        <tr>
+                            <td>Kiköltözési nyilatkozat</td>
+                            <td></td>
                             <td>
-                                <x-input.button :href="route('documents.register-statement.print')" class="coli blue" text="nyomtatás" />
+                                <x-input.button :href="route('documents.leaving-statement.download')" text="letöltés" />
                             </td>
                         </tr>
                         @endcan
@@ -35,10 +40,7 @@
                                 <x-input.button :href="route('documents.import.show')" text="kitöltés" />
                             </td>
                             <td>
-                                <x-input.button :href="route('documents.import.download')" text="nyomtatás" />
-                            </td>
-                            <td>
-                                <x-input.button :href="route('documents.import.print')" class="coli blue" text="document.print" />
+                                <x-input.button :href="route('documents.import.download')" text="letöltés" />
                             </td>
                         </tr>
                         @endcan

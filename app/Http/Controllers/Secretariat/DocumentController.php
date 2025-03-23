@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Models\Semester;
 use App\Models\ImportItem;
 use App\Console\Commands;
-use App\Utils\Printer;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
@@ -25,16 +24,6 @@ class DocumentController extends Controller
         return view('secretariat.document.index');
     }
 
-    /** Register statement */
-
-    public function printRegisterStatement()
-    {
-        Gate::authorize('document.register-statement');
-
-        $result = $this->generateRegisterStatement();
-        return $this->printDocument($result, __('document.register-statement'));
-    }
-
     public function downloadRegisterStatement()
     {
         Gate::authorize('document.register-statement');
@@ -43,14 +32,12 @@ class DocumentController extends Controller
         return $this->downloadDocument($result);
     }
 
-    /** Import license */
-
-    public function printImport()
+    public function downloadLeavingStatement()
     {
-        Gate::authorize('document.import-license');
+        Gate::authorize('document.leaving-statement');
 
-        $result = $this->generateImport();
-        return $this->printDocument($result, __('document.import'));
+        $result = $this->generateLeavingStatement();
+        return $this->downloadDocument($result);
     }
 
     public function downloadImport()
@@ -113,9 +100,8 @@ class DocumentController extends Controller
 
         $url = route('documents.status-cert.show', ['id' => user()->id]);
         $secretaries = User::withRole(Role::SECRETARY)->get();
-        foreach ($secretaries as $recipient) {
-            Mail::to($recipient)->queue(new \App\Mail\StateCertificateRequest($recipient->name, user()->name, $url));
-        }
+
+        Mail::to($secretaries)->cc(user())->queue(new \App\Mail\StateCertificateRequest("Titkárság", user()->name, $url));
 
         return redirect()->back()->with('message', "Sikeres igénylés. Az igazolást hamarosan megtalálhatod a titkárságon.");
     }
@@ -130,16 +116,6 @@ class DocumentController extends Controller
         }
         $document = $result['pdf'];
         return response()->download($document);
-    }
-
-    private function printDocument($result, $filename)
-    {
-        if (!$result['success']) {
-            return $result['redirect'];
-        }
-        $document = $result['pdf'];
-        $printer = new Printer($filename, $document, /* $use_free_printing_credits */ true);
-        return $printer->print();
     }
 
     // Returns the .tex file in debug mode
@@ -165,7 +141,41 @@ class DocumentController extends Controller
         }
     }
 
+    private function personalDataContext(){
+        $user = user();
+
+        $info = $user->personalInformation;
+
+        return [ 'name' => $user->name,
+            'address' => $info->zip_code . ' ' . $info->getAddress(),
+            'phone' => $info->phone_number,
+            'email' => $user->email,
+            'place_and_of_birth' => $info->getPlaceAndDateOfBirth(),
+            'mothers_name' => $info->mothers_name,
+            'date' => date("Y.m.d"),
+        ];
+    }
+
+
     private function generateRegisterStatement()
+    {
+        $user = user();
+
+        if (!$user->hasPersonalInformation()) {
+            return [
+                'success' => false,
+                'redirect' => back()->withInput()->with('error', __('document.missing_personal_info'))
+            ];
+        }
+
+        $pdf = $this->generatePDF(
+            'latex.register-statement',
+            $this->personalDataContext()
+        );
+        return ['success' => true, 'pdf' => $pdf];
+    }
+
+    private function generateLeavingStatement()
     {
         $user = user();
 
@@ -178,15 +188,8 @@ class DocumentController extends Controller
         $info = $user->personalInformation;
 
         $pdf = $this->generatePDF(
-            'latex.register-statement',
-            [ 'name' => $user->name,
-              'address' => $info->zip_code . ' ' . $info->getAddress(),
-              'phone' => $info->phone_number,
-              'email' => $user->email,
-              'place_and_of_birth' => $info->getPlaceAndDateOfBirth(),
-              'mothers_name' => $info->mothers_name,
-              'date' => date("Y.m.d"),
-        ]
+            'latex.leaving-statement',
+            $this->personalDataContext()
         );
         return ['success' => true, 'pdf' => $pdf];
     }
