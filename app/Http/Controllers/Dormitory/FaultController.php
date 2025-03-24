@@ -48,7 +48,7 @@ class FaultController extends Controller
         $this->authorize('update', Fault::class);
 
         $status = $request['status'];
-        $auth = user()->hasRole(Role::STAFF) || Fault::getState($status) === Fault::UNSEEN;
+        $auth = user()->isStaff() || Fault::getState($status) === Fault::UNSEEN;
         $fault = Fault::findOrFail($request['id']);
         $fault->update([
             'status' => Fault::getState($status),

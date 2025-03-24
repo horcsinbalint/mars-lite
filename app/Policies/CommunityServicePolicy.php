@@ -53,7 +53,7 @@ class CommunityServicePolicy
      */
     public function approveAny(User $user)
     {
-        return $user->hasRole([Role::STUDENT_COUNCIL => array_merge(Role::STUDENT_COUNCIL_LEADERS, Role::COMMITTEE_LEADERS)]);
+        return $user->isStudentCouncilMember();
     }
 
     /**

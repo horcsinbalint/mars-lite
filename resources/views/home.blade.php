@@ -18,10 +18,9 @@
 @endif
 <!-- Information -->
 @if($information_general.$information_collegist != '' ||
-    user()->hasRole([
-        \App\Models\Role::STUDENT_COUNCIL => \App\Models\Role::STUDENT_COUNCIL_LEADERS,
-        \App\Models\Role::SYS_ADMIN,
-        \App\Models\Role::STUDENT_COUNCIL_SECRETARY]))
+    user()->isStudentCouncilLeader() ||
+    user()->isAdmin() ||
+    user()->isStudentCouncilSecretary())
 <div class="row">
     <div class="col s12">
         <div class="card">
@@ -30,10 +29,9 @@
                 <div id="info_text">
                     @markdown($information_general)
                     @markdown($information_collegist)
-                    @if(user()->hasRole([
-                        \App\Models\Role::STUDENT_COUNCIL => \App\Models\Role::STUDENT_COUNCIL_LEADERS,
-                        \App\Models\Role::SYS_ADMIN,
-                        \App\Models\Role::STUDENT_COUNCIL_SECRETARY]))
+                    @if(user()->isStudentCouncilLeader() ||
+                        user()->isAdmin() ||
+                        user()->isStudentCouncilSecretary())
                         <x-input.button floating class="right" id="edit_btn" icon="mode_edit"/>
                     @endif
                 </div>

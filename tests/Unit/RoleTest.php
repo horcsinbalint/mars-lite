@@ -47,7 +47,7 @@ class RoleTest extends TestCase
         $user->addRole(Role::get(Role::TENANT));
 
         $this->assertTrue($user->hasRole(Role::get(Role::TENANT)));
-        $this->assertTrue($user->hasRole(Role::TENANT));
+        $this->assertTrue($user->isTenant());
         $this->assertTrue($user->hasRole([Role::TENANT, Role::DIRECTOR]));
     }
 

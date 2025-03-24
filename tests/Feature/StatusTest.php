@@ -45,8 +45,8 @@ class StatusTest extends TestCase
 
         app(SemesterEvaluationController::class)->finalize(Semester::current());
 
-        $this->assertFalse($user->hasRole(Role::COLLEGIST));
-        $this->assertTrue($user->hasRole(Role::ALUMNI));
+        $this->assertFalse($user->isCollegist());
+        $this->assertTrue($user->isAlumni());
         $this->assertTrue($user->isCollegist());
     }
 
@@ -65,6 +65,6 @@ class StatusTest extends TestCase
         app(SemesterEvaluationController::class)->handlePeriodicEventEnd();
 
         $this->assertTrue($user->isActive(Semester::next()));
-        $this->assertFalse($user->hasRole(Role::ALUMNI));
+        $this->assertFalse($user->isAlumni());
     }
 }

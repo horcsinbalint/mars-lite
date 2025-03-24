@@ -493,11 +493,6 @@ class User extends Authenticatable implements HasLocalePreference
         return $query->where('users.verified', 1);
     }
 
-    public function isSenior(): bool
-    {
-        return $this->hasRole(Role::SENIOR);
-    }
-
     /**
      * Scope a query to only include users whose data can be accessed by the given user.
      * @param Builder $query
@@ -510,7 +505,7 @@ class User extends Authenticatable implements HasLocalePreference
         if (user()->isAdmin()) {
             return $query;
         }
-        if (user()->hasRole(Role::STAFF)) {
+        if (user()->isStaff()) {
             return $query->withRole(Role::TENANT);
         }
         if (user()->can('viewAll', User::class)) {
@@ -688,7 +683,7 @@ class User extends Authenticatable implements HasLocalePreference
     public function preferredLocale(): string
     {
         // default english, see issue #11
-        return $this->hasRole(Role::TENANT) ? 'en' : 'hu';
+        return $this->isTenant() ? 'en' : 'hu';
     }
 
     /**
@@ -723,30 +718,15 @@ class User extends Authenticatable implements HasLocalePreference
 
     /* Role related */
 
-    /**
-     * Determine if the user is a sys admin.
-     * @return boolean
-     */
-    public function isAdmin(): bool
-    {
-        return $this->hasRole(Role::SYS_ADMIN);
+
+    public static function getById(int $id) {
+        return User::findOrFail($id);
     }
 
-    /**
-     * Determine if the user is a collegist (including alumni).
-     * @return boolean
-     */
-    public function isCollegist($alumni = true): bool
-    {
-        if ($this->verified == false) {
-            return $this->roles()->where('role_id', Role::collegist()->id)->exists();
-        }
-        $accepted_roles = [Role::COLLEGIST];
-        if($alumni){
-            $accepted_roles[] = Role::ALUMNI;
-        }
-        return $this->hasRole($accepted_roles);
+    public function getId(): int {
+        return $this->id;
     }
+
 
     /**
      * Attach collegist role as extern or resident.
@@ -759,21 +739,6 @@ class User extends Authenticatable implements HasLocalePreference
         $this->addRole($role, $object);
     }
 
-    /**
-     * Decides if the user is a resident collegist currently.
-     *
-     * @return bool
-     */
-    public function isResident(): bool
-    {
-        if ($this->verified == false) {
-            return $this->roles()
-                ->where('role_id', Role::collegist()->id)
-                ->where('object_id', RoleObject::firstWhere('name', Role::RESIDENT)->id)
-                ->exists();
-        }
-        return $this->hasRole([Role::COLLEGIST => Role::RESIDENT]);
-    }
 
     /**
      * Set the collegist to be resident.
@@ -784,22 +749,6 @@ class User extends Authenticatable implements HasLocalePreference
         $this->setCollegist(Role::RESIDENT);
     }
 
-    /**
-     * Decides if the user is an extern collegist currently.
-     *
-     * @return bool
-     */
-    public function isExtern(): bool
-    {
-        if ($this->verified == false) {
-            return $this->roles()
-                ->where('role_id', Role::collegist()->id)
-                ->where('object_id', RoleObject::firstWhere('name', Role::EXTERN)->id)
-                ->exists();
-        }
-        return $this->hasRole([Role::COLLEGIST => Role::EXTERN]);
-    }
-
 
     /**
      * Set the collegist to be extern.
@@ -808,24 +757,6 @@ class User extends Authenticatable implements HasLocalePreference
     public function setExtern(): void
     {
         $this->setCollegist(Role::EXTERN);
-    }
-
-    /**
-     * Determine if the user has an alumni role.
-     * @return boolean
-     */
-    public function isAlumni(): bool
-    {
-        return $this->hasRole(Role::ALUMNI);
-    }
-
-    /**
-     * Determine if the user has a tenant role.
-     * @return boolean
-     */
-    public function isTenant(): bool
-    {
-        return $this->hasRole(Role::TENANT);
     }
 
     /**

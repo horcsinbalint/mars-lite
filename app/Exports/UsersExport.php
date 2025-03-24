@@ -31,7 +31,7 @@ class UsersExport implements WithMultipleSheets, WithDefaultStyles
 
         if(user()->can('viewSemesterEvaluation', User::class)) {
             $sheets[] = new SemesterEvaluationExport($this->includedUsers);
-            if(user()->hasRole(Role::STUDENT_COUNCIL)) {
+            if(user()->isStudentCouncil()) {
                 $sheets[] = new StudentsCouncilFeedback($this->includedUsers);
             }
         }

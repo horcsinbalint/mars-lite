@@ -12,6 +12,20 @@ class RoomPolicy
     use HandlesAuthorization;
 
     /**
+     * bypass for admins
+     *
+     * @param User $user
+     * @return bool|void
+     */
+    public function before(User $user)
+    {
+        if ($user->isDirector() || $user->isCollegeLeader() ||
+        $user->isStaff() || $user->isAdmin()) {
+            return true;
+        }
+    }
+
+    /**
      * Determine whether the user can view any models.
      *
      * @param  \App\Models\User  $user
@@ -19,13 +33,7 @@ class RoomPolicy
      */
     public function viewAny(User $user)
     {
-        return $user->hasRole([
-            Role::DIRECTOR,
-            Role::SECRETARY,
-            Role::STAFF,
-            Role::COLLEGIST,
-            Role::SYS_ADMIN
-        ]);
+        return $user->isCollegist();
     }
 
     /**
@@ -36,11 +44,6 @@ class RoomPolicy
      */
     public function updateAny(User $user)
     {
-        return $user->hasRole([
-            Role::SECRETARY,
-            Role::STAFF,
-            Role::SYS_ADMIN,
-            Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS
-        ]);
+        return $user->isStudentCouncilLeader();
     }
 }

@@ -35,22 +35,22 @@ class AuthServiceProvider extends ServiceProvider
     private function registerDocumentPolicies()
     {
         Gate::define('document.status-certificate.viewAny', function ($user) {
-            return $user->hasRole(Role::SECRETARY);
+            return $user->isSecretary();
         });
         Gate::define('document.status-certificate', function ($user) {
             return $user->isCollegist(alumni: false);
         });
         Gate::define('document.register-statement', function ($user) {
             return $user->isCollegist(alumni: false)
-                || $user->hasRole(Role::TENANT);
+                || $user->isTenant();
         });
         Gate::define('document.leaving-statement', function ($user) {
             return $user->isCollegist(alumni: false)
-                || $user->hasRole(Role::TENANT);
+                || $user->isTenant();
         });
         Gate::define('document.import-license', function ($user) {
             return $user->isCollegist()
-                || $user->hasRole(Role::TENANT);
+                || $user->isTenant();
         });
 
         Gate::define('document.any', function ($user) {

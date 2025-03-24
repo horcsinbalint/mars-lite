@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Log;
 trait HasRoles
 {
     abstract public function roles(): BelongsToMany;
+    abstract public static function getById(int $id);
+    abstract public function getId(): int;
 
     /**
      * Scope a query to only include users with the given role.
@@ -103,8 +105,9 @@ trait HasRoles
      */
     public function hasRole(array|int|string|Role $roles): bool
     {
-        $user_roles = $this->roles();
-        $hasRoleLambda = function () use($user_roles, $roles) {
+        $user_id = $this->getId();
+        $hasRoleLambda = function () use($user_id, $roles) {
+            $user_roles = self::getById($user_id)->roles();
             Log::debug(gettype($roles));
             if (!is_array($roles)) {
                 $roles = [$roles];
@@ -198,4 +201,193 @@ trait HasRoles
     }
 
 
+    public function isSenior(): bool
+    {
+        return $this->hasRole(Role::SENIOR);
+    }
+
+    /**
+     * Determine if the user is a sys admin.
+     * @return boolean
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(Role::SYS_ADMIN);
+    }
+    /**
+     * Determine if the user is a collegist (including alumni).
+     * @return boolean
+     */
+    public function isCollegist($alumni = true): bool
+    {
+        if ($this->verified == false) {
+            return $this->roles()->where('role_id', Role::collegist()->id)->exists();
+        }
+        $accepted_roles = [Role::COLLEGIST];
+        if($alumni){
+            $accepted_roles[] = Role::ALUMNI;
+        }
+        return $this->hasRole($accepted_roles);
+    }
+    /**
+     * Decides if the user is a resident collegist currently.
+     *
+     * @return bool
+     */
+    public function isResident(): bool
+    {
+        return $this->hasRole([Role::COLLEGIST => Role::RESIDENT]);
+    }
+
+    /**
+     * Decides if the user is an extern collegist currently.
+     *
+     * @return bool
+     */
+    public function isExtern(): bool
+    {
+        if ($this->verified == false) {
+            return $this->roles()
+                ->where('role_id', Role::collegist()->id)
+                ->where('object_id', RoleObject::firstWhere('name', Role::EXTERN)->id)
+                ->exists();
+        }
+        return $this->hasRole([Role::COLLEGIST => Role::EXTERN]);
+    }
+
+    /**
+     * Determine if the user has an alumni role.
+     * @return boolean
+     */
+    public function isAlumni(): bool
+    {
+        return $this->hasRole(Role::ALUMNI);
+    }
+
+    /**
+     * Determine if the user has a secretary role.
+     * @return boolean
+     */
+    public function isSecretary(): bool
+    {
+        return $this->hasRole(Role::SECRETARY);
+    }
+    /**
+     * Determine if the user has a secretary role.
+     * @return boolean
+     */
+    public function isStudentCouncilSecretary(): bool
+    {
+        return $this->hasRole(Role::STUDENT_COUNCIL_SECRETARY);
+    }
+
+    /**
+     * Determine if the user has a staff role.
+     * @return boolean
+     */
+    public function isStaff(): bool
+    {
+        return $this->hasRole(Role::STAFF);
+    }
+
+    /**
+     * Determine if the user has a tenant role.
+     * @return boolean
+     */
+    public function isTenant(): bool
+    {
+        return $this->hasRole(Role::TENANT);
+    }
+
+    public function isCommunicationLeader(): bool {
+        return $this->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNICATION_LEADER]);
+    }
+
+    public function isCommunicationMember(): bool {
+        return $this->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNICATION_MEMBER]);
+    }
+
+    public function isCommunicationReferent(): bool {
+        return $this->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNICATION_REFERENT]);
+    }
+
+    public function isCommunityLeader(): bool {
+        return $this->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNITY_LEADER]);
+    }
+
+    public function isCommunityMember(): bool {
+        return $this->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNITY_MEMBER]);
+    }
+
+    public function isCommunityReferent(): bool {
+        return $this->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNITY_REFERENT]);
+    }
+
+    public function isEconomicVicePresident(): bool {
+        return $this->hasRole([Role::STUDENT_COUNCIL => Role::ECONOMIC_VICE_PRESIDENT]);
+    }
+
+    public function isKKTHandler(): bool {
+        return $this->hasRole([Role::STUDENT_COUNCIL => Role::KKT_HANDLER]);
+    }
+
+    /**
+     * Determine if the user has role that is associated with the student council
+     * @return boolean
+     */
+    public function isStudentCouncil(): bool
+    {
+        return $this->hasRole(Role::STUDENT_COUNCIL);
+    }
+
+    /**
+     * Determine if the user has role that is associated with the student council
+     * @return boolean
+     */
+    public function isDirector(): bool
+    {
+        return $this->hasRole(Role::DIRECTOR);
+    }
+    public function isWorkshopLeader(): bool
+    {
+        return $this->hasRole(Role::WORKSHOP_LEADER);
+    }
+    public function isApplicationCommitteeMember(): bool
+    {
+        return $this->hasRole(Role::APPLICATION_COMMITTEE_MEMBER);
+    }
+    public function isAggregatedApplicationCommitteeMember(): bool
+    {
+        return $this->hasRole(Role::AGGREGATED_APPLICATION_COMMITTEE_MEMBER);
+    }
+    public function isReceptionist(): bool
+    {
+        return $this->hasRole(Role::RECEPTIONIST);
+    }
+    public function isWorkshopAdministrator(): bool
+    {
+        return $this->hasRole(Role::WORKSHOP_ADMINISTRATOR);
+    }
+
+    public function isCollegeLeader(): bool
+    {
+        return $this->isDirector() || $this->isSecretary();
+    }
+
+    public function isCollegeMaintainer(): bool
+    {
+        return $this->isCollegeLeader() || $this->isStaff();
+    }
+
+    public function isStudentCouncilMember(): bool {
+        return $this->hasRole([
+            Role::STUDENT_COUNCIL => array_merge(Role::STUDENT_COUNCIL_LEADERS, Role::COMMITTEE_LEADERS)
+        ]);
+    }
+
+    public function isStudentCouncilLeader(): bool {
+        return $this->hasRole([
+            Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS
+        ]);
+    }
 }

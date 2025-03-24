@@ -19,7 +19,8 @@ class FaultPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole([Role::STAFF, Role::COLLEGIST, Role::TENANT]);
+        return $user->isStaff() || $user->isCollegist()
+            || $user->isTenant();
     }
 
     /**
@@ -41,6 +42,6 @@ class FaultPolicy
      */
     public function update(User $user)
     {
-        return $user->hasRole(Role::STAFF);
+        return $user->isStaff();
     }
 }

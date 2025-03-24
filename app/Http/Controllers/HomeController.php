@@ -32,7 +32,7 @@ class HomeController extends Controller
 
         $information_general = DB::table('custom')->where('key', 'HOME_PAGE_NEWS')->first()->text;
 
-        if (user()->hasRole(Role::COLLEGIST)) {
+        if (user()->isCollegist()) {
             $information_collegist = DB::table('custom')->where('key', 'HOME_PAGE_NEWS_COLLEGISTS')->first()->text;
         }
 
@@ -57,10 +57,9 @@ class HomeController extends Controller
     {
         /*@var User $user*/
         $user = user();
-        if (!$user->hasRole([
-            Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS,
-            Role::SYS_ADMIN,
-            Role::STUDENT_COUNCIL_SECRETARY])) {
+        if (!($user->isStudentCouncilLeader()
+        || $user->isAdmin()
+        || $user->isStudentCouncilSecretary())) {
             abort(403);
         }
 
@@ -150,7 +149,7 @@ class HomeController extends Controller
             ]
         ];
 
-        if (user()->hasRole(Role::COLLEGIST)) {
+        if (user()->isCollegist()) {
             $student_council_objects = RoleObject::whereIn('name', Role::STUDENT_COUNCIL_LEADERS)
                 ->orWhereIn('name', Role::COMMITTEE_LEADERS)
                 ->get()->pluck('id')->toArray();

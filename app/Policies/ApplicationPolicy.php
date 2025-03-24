@@ -50,15 +50,12 @@ class ApplicationPolicy
      */
     public function viewSome(User $user): bool
     {
-        return $user->hasRole([
-            Role::SECRETARY,
-            Role::DIRECTOR,
-            Role::WORKSHOP_ADMINISTRATOR,
-            Role::WORKSHOP_LEADER,
-            Role::APPLICATION_COMMITTEE_MEMBER,
-            Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS,
-            Role::AGGREGATED_APPLICATION_COMMITTEE_MEMBER
-        ]);
+        return $user->isCollegeLeader() ||
+        $user->isWorkshopAdministrator() ||
+        $user->isWorkshopLeader() ||
+        $user->isApplicationCommitteeMember() ||
+        $user->isStudentCouncilLeader() ||
+        $user->isAggregatedApplicationCommitteeMember();
     }
 
     /**
@@ -67,23 +64,15 @@ class ApplicationPolicy
      */
     public function editStatus(User $user, ?Workshop $workshop = null): bool
     {
+        if($user->isCollegeLeader() || $user->isStudentCouncilLeader()) {
+            return true;
+        }
         if ($workshop) {
-            if($user->hasRole([
-                Role::SECRETARY,
-                Role::DIRECTOR,
-                Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS
-            ])) {
-                return true;
-            }
-            if($user->hasRole(Role::WORKSHOP_LEADER)) {
+            if($user->isWorkshopLeader()) {
                 return $user->roleWorkshops->contains($workshop);
             }
         }
-        return $user->hasRole([
-            Role::SECRETARY,
-            Role::DIRECTOR,
-            Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS
-        ]);
+        return false;
     }
 
     /**
@@ -92,12 +81,10 @@ class ApplicationPolicy
      */
     public function viewAll(User $user): bool
     {
-        return $user->hasRole([
-            Role::SECRETARY,
-            Role::DIRECTOR,
-            Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS,
-            Role::AGGREGATED_APPLICATION_COMMITTEE_MEMBER
-        ]);
+        return $user->isStudentCouncilLeader() ||
+                $user->isCollegeLeader() ||
+                $user->isWorkshopAdministrator() ||
+                $user->isAggregatedApplicationCommitteeMember();
     }
 
     /**
@@ -106,11 +93,8 @@ class ApplicationPolicy
      */
     public function viewUnfinished(User $user): bool
     {
-        return $user->hasRole([
-            Role::SECRETARY,
-            Role::DIRECTOR,
-            Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS,
-        ]);
+        return $user->isStudentCouncilLeader() ||
+                $user->isCollegeLeader();
     }
 
     /**
@@ -120,7 +104,7 @@ class ApplicationPolicy
      */
     public function finalize(User $user): bool
     {
-        return $user->hasRole([Role::SYS_ADMIN, Role::SECRETARY]);
+        return $user->isAdmin() || $user->isCollegeLeader();
     }
 
 }

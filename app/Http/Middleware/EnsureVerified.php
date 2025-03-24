@@ -20,7 +20,7 @@ class EnsureVerified
             abort(403);
         }
         if (!$request->user()->verified) {
-            if ($request->user()->hasRole(Role::TENANT)) {
+            if ($request->user()->isTenant()) {
                 return Redirect::route('verification');
             } else {
                 return Redirect::route('application');

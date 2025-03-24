@@ -20,7 +20,7 @@ class SemesterEvaluationPolicy
      */
     public function fill(User $user): Response|bool
     {
-        if(!$user->isCollegist(alumni: false) || $user->hasRole(Role::SENIOR)) {
+        if(!$user->isCollegist(alumni: false) || $user->isSenior()) {
             return false;
         }
         if(!app(SemesterEvaluationController::class)->isActive()) {
@@ -37,13 +37,11 @@ class SemesterEvaluationPolicy
      */
     public function manage(User $user): Response|bool
     {
-        return $user->hasRole([
-            Role::SYS_ADMIN,
-            Role::DIRECTOR,
-            Role::SECRETARY,
-            Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS,
-            Role::STUDENT_COUNCIL_SECRETARY
-        ]);
+        return $user->isAdmin() ||
+               $user->isDirector() ||
+               $user->isCollegeLeader() ||
+               $user->isStudentCouncilLeader() ||
+               $user->isStudentCouncilSecretary();
     }
 
     /**

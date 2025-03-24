@@ -98,7 +98,7 @@
                     </div>
                 </li>
                 <!-- students' council module -->
-                @if(user()->can('is-collegist') || user()->hasRole(\App\Models\Role::SECRETARY))
+                @if(user()->isCollegist() || user()->isSecretary())
                     <li class="@yield('student_council_module')">
                         <a class="collapsible-header waves-effect" style="padding-left:32px">
                             <i class="material-icons left">groups</i> <!-- star icon? -->
@@ -208,7 +208,7 @@
                     <li>
                         <a class="waves-effect" href="{{ route('users.index') }}">
                             <i class="material-icons left">supervisor_account</i>
-                            @if(user()->hasRole([\App\Models\Role::SYS_ADMIN, \App\Models\Role::STAFF]))
+                            @if(user()->isAdmin() || user()->isStaff())
                                 @lang("general.users")
                             @else
                                 Collegisták

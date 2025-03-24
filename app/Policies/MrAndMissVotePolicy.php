@@ -40,7 +40,7 @@ class MrAndMissVotePolicy
      */
     public function manage(User $user): bool
     {
-        return $user->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNITY_LEADER]);
+        return $user->isCommunityLeader();
     }
 
 

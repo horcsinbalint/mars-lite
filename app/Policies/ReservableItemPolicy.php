@@ -19,11 +19,7 @@ class ReservableItemPolicy
     public function administer(User $user): bool
     {
         return $user->isAdmin()
-            || $user->hasRole([
-                Role::SECRETARY,
-                Role::STAFF,
-                Role::DIRECTOR
-        ]);
+            || $user->isCollegeMaintainer();
     }
 
     /**
@@ -39,10 +35,13 @@ class ReservableItemPolicy
         } else {
             switch ($type) {
                 case ReservableItemType::WASHING_MACHINE:
-                    return $user->hasRole([Role::COLLEGIST, Role::TENANT]);
+                    return $user->isCollegist() || $user->isTenant();
                 case ReservableItemType::ROOM:
                     return config('custom.room_reservation_open')
-                        && $user->hasRole([Role::WORKSHOP_LEADER, Role::WORKSHOP_ADMINISTRATOR, Role::STUDENT_COUNCIL => array_merge(Role::STUDENT_COUNCIL_LEADERS, Role::COMMITTEE_LEADERS)]);
+                        && ($user->isWorkshopLeader()
+                            || $user->isWorkshopAdministrator()
+                            || $user->isStudentCouncilMember()
+                        );
                 default:
                     throw new \Exception("unknown ReservableItemType");
             }
@@ -69,14 +68,10 @@ class ReservableItemPolicy
     public function autoVerify(User $user, ReservableItem $item): bool
     {
         if ($item->isWashingMachine()) {
-            return $user->hasRole([Role::COLLEGIST, Role::TENANT]);
+            return $user->isCollegist() || $user->isTenant();
         } else {
             // admins not!
-            return $user->hasRole([
-                Role::SECRETARY,
-                Role::STAFF,
-                Role::DIRECTOR
-            ]);
+            return $user->isCollegeMaintainer();
         }
     }
 
@@ -91,9 +86,9 @@ class ReservableItemPolicy
         } else {
             switch ($type) {
                 case ReservableItemType::WASHING_MACHINE:
-                    return $user->hasRole([Role::COLLEGIST, Role::TENANT, Role::RECEPTIONIST]);
+                    return $user->isCollegist() || $user->isTenant() || $user->isReceptionist();
                 case ReservableItemType::ROOM:
-                    return $user->hasRole([Role::COLLEGIST, Role::WORKSHOP_LEADER, Role::RECEPTIONIST]);
+                    return $user->isCollegist() || $user->isWorkshopLeader() || $user->isReceptionist();
                 default:
                     throw new \Exception("unknown ReservableItemType");
             }

@@ -29,7 +29,7 @@ class GeneralAssemblyPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isCollegist(alumni: false) || $user->hasRole(Role::SECRETARY);
+        return $user->isCollegist(alumni: false) || $user->isCollegeLeader();
     }
 
     /**
@@ -37,6 +37,6 @@ class GeneralAssemblyPolicy
      */
     public function administer(User $user)
     {
-        return $user->hasRole([Role::STUDENT_COUNCIL => Role::STUDENT_COUNCIL_LEADERS, Role::STUDENT_COUNCIL_SECRETARY]);
+        return $user->isStudentCouncilLeader() || $user->isStudentCouncilSecretary();
     }
 }

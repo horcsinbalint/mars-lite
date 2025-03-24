@@ -19,11 +19,9 @@ class ReservationPolicy
     public function administer(User $user): bool
     {
         return $user->isAdmin()
-            || $user->hasRole([
-                Role::SECRETARY,
-                Role::STAFF,
-                Role::DIRECTOR
-            ]);
+            || $user->isSecretary()
+            || $user->isStaff()
+            || $user->isDirector();
     }
 
     /**

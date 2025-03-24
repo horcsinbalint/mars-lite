@@ -94,7 +94,7 @@ class ReservationController extends \App\Http\Controllers\Controller
      */
     private static function notifyOnVerifiableReservation(Reservation $reservation)
     {
-        if (!user()->hasRole([Role::SECRETARY, Role::STAFF])) {
+        if (!user()->isCollegeMaintainer()) {
             $thoseToNotify = User::whereHas('roles', function ($query) {
                 $query->whereIn('name', [Role::SECRETARY, Role::STAFF]);
             })->get();

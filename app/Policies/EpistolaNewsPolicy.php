@@ -50,8 +50,9 @@ class EpistolaNewsPolicy
      */
     public function edit(User $user): bool
     {
-        return $user->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNICATION_LEADER])
-            || $user->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNICATION_MEMBER]);
+        return $user->isCommunicationLeader()
+            || $user->isCommunicationMember()
+            || $user->isCommunicationReferent();
     }
 
     /**
@@ -61,7 +62,7 @@ class EpistolaNewsPolicy
      */
     public function send(User $user): bool
     {
-        return $user->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNICATION_LEADER])
-            || $user->hasRole([Role::STUDENT_COUNCIL => Role::COMMUNICATION_MEMBER]);
+        return $user->isCommunicationLeader()
+            || $user->isCommunicationReferent();
     }
 }

@@ -55,13 +55,9 @@ class CheckoutPolicy
      */
     public function addKKTNetreg(User $user): bool
     {
-        return $user->hasRole([
-            Role::SYS_ADMIN,
-            Role::STUDENT_COUNCIL => [
-                Role::ECONOMIC_VICE_PRESIDENT,
-                Role::KKT_HANDLER,
-            ],
-        ]);
+        return $user->isAdmin() ||
+               $user->isEconomicVicePresident() ||
+               $user->isKKTHandler();
     }
 
     /**
@@ -69,12 +65,8 @@ class CheckoutPolicy
      */
     public function calculateWorkshopBalance(User $user): bool
     {
-        return $user->hasRole([
-            Role::SYS_ADMIN,
-            Role::STUDENT_COUNCIL => [
-                Role::ECONOMIC_VICE_PRESIDENT,
-            ]
-        ]);
+        return $user->isAdmin() ||
+               $user->isEconomicVicePresident();
     }
 
     /**
