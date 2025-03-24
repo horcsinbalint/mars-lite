@@ -15,11 +15,11 @@ use PhpOffice\PhpSpreadsheet\Style\Style;
 
 class UsersExport implements WithMultipleSheets, WithDefaultStyles
 {
-    private Collection|User $includedUsers;
+    private $includedUsers;
 
-    public function __construct(Collection|User $includedUsers)
+    public function __construct($includedUsers)
     {
-        $this->includedUsers = $includedUsers->sortBy('name');
+        $this->includedUsers = $includedUsers->orderBy('name');
     }
 
     public function sheets(): array
@@ -31,9 +31,9 @@ class UsersExport implements WithMultipleSheets, WithDefaultStyles
 
         if(user()->can('viewSemesterEvaluation', User::class)) {
             $sheets[] = new SemesterEvaluationExport($this->includedUsers);
-            if(user()->isStudentCouncil()) {
+            /*if(user()->isStudentCouncil()) {
                 $sheets[] = new StudentsCouncilFeedback($this->includedUsers);
-            }
+            }*/
         }
 
         return $sheets;

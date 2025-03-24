@@ -18,9 +18,9 @@ class StatusesExport implements FromCollection, WithTitle, WithMapping, WithHead
     protected $users;
     protected $semesters;
 
-    public function __construct(Collection|User $includedUsers)
+    public function __construct($includedUsers)
     {
-        $this->users = $includedUsers;
+        $this->users = $includedUsers->with(['semesterStatuses', 'educationalInformation'])->get();
         $this->semesters = Semester::allUntilCurrent()->sortByDesc('tag');
     }
 

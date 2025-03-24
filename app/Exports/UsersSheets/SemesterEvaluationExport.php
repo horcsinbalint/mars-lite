@@ -20,14 +20,16 @@ class SemesterEvaluationExport implements FromCollection, WithTitle, WithMapping
     protected $evaluations;
     protected $semester;
 
-    public function __construct(Collection|User $includedUsers)
+    public function __construct($includedUsers)
     {
         $this->semester = SemesterEvaluation::query()->orderBy('created_at', 'desc')->first()?->semester;
         $users = $includedUsers->pluck('id');
         $this->evaluations = SemesterEvaluation::query()
             ->where('semester_id', $this->semester?->id)
             ->whereIn('user_id', $users)
-            ->with('user')
+            ->with(['user' => function ($query) {
+            $query->with('educationalInformation', 'faculties', 'semesterStatuses', 'workshops', 'roles', 'communityServiceRequests');
+            }])
             ->get()
             ->sortBy(fn ($evaluation) => $evaluation->user->name);
     }
@@ -81,6 +83,8 @@ class SemesterEvaluationExport implements FromCollection, WithTitle, WithMapping
     {
         $user = $evaluation->user;
 
+        $current_semester = $evaluation->semester;
+        $next_semester = $evaluation->semester->succ();
         return [
             '=HYPERLINK("'.route('users.show', ['user' => $user->id]).'", "'.$user->name.'")',
             $user->educationalInformation?->neptun,
@@ -88,25 +92,26 @@ class SemesterEvaluationExport implements FromCollection, WithTitle, WithMapping
             implode(" \n", $user->workshops->pluck('name')->toArray()),
             $user->isResident() ? 'Bentlakó' : ($user->isExtern() ? 'Bejáró' : ($user->isAlumni() ? "Alumni" : ($user->isTenant() ? "Vendég" : ""))),
             $evaluation->resign_residency ? 'Igen' : '',
-            $user->getStatus($evaluation->semester)?->translatedStatus(),
-            $user->getStatus($evaluation->semester->succ())?->translatedStatus(),
+            $user->getStatus($current_semester)?->translatedStatus(),
+            $user->getStatus($next_semester)?->translatedStatus(),
             $evaluation->will_write_request ? "Igen" : '',
-            $user->educationalInformation?->languageExamsBeforeAcceptance?->map(function ($exam) {
-                return implode(", ", [__('role.'.$exam->language), $exam->level, $exam->type, $exam->date->format('Y-m')]);
-            })->implode(" \n"),
-            $user->educationalInformation?->languageExamsAfterAcceptance?->map(function ($exam) {
-                return implode(", ", [__('role.'.$exam->language), $exam->level, $exam->type, $exam->date->format('Y-m')]);
-            })->implode(" \n"),
-            ($user->educationalInformation?->alfonso_language ?
-                __('role.'.$user->educationalInformation->alfonso_language) . " " . $user->educationalInformation->alfonso_desired_level
-                : ""),
-            ($user->educationalInformation?->alfonsoCompleted() ?? false)
-                ? 'Igen'
-                : (($user->educationalInformation?->alfonsoCanBeCompleted() ?? true) ? "Folyamatban" : "Nem"),
+            implode(" \n", array_map(function ($exam) {
+                    return implode(", ", [__('role.'.$exam->language), $exam->level, $exam->type, $exam->date->format('Y-m')]);
+                }, $user->educationalInformation?->languageExamsBeforeAcceptance() ?? [])),
+                implode(" \n", array_map(function ($exam) {
+                    return implode(", ", [__('role.'.$exam->language), $exam->level, $exam->type, $exam->date->format('Y-m')]);
+                }, $user->educationalInformation?->languageExamsAfterAcceptance() ?? [])),
+                ($user->educationalInformation?->alfonso_language ?
+                    __('role.'.$user->educationalInformation?->alfonso_language) . " " . $user->educationalInformation?->alfonso_desired_level
+                    : ""),
+                ($user->educationalInformation?->alfonsoCompleted($user->isSenior()) ?? false)   //Senior status cannot be loaded easily there
+                    ? 'Igen'
+                    : (($user->educationalInformation?->alfonsoCanBeCompleted() ?? true) ? "Folyamatban" : "Nem"),
             $evaluation->alfonso_note,
             $evaluation->current_avg,
             $evaluation->last_avg,
             implode(" \n", array_map(fn ($course) => $course['code'] . " " . $course['name'] . ' - ' . $course['grade'], $evaluation->courses)),
+            //TODO optimize
             GeneralAssembly::all()->sortByDesc('closed_at')->take(2)->map(function ($generalAssembly) use ($user) {
                 return $generalAssembly->isAttended($user) ? "Részt vett" : "Nem vett részt";
             })->implode(" \n"),

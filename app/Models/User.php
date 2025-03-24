@@ -155,7 +155,7 @@ class User extends Authenticatable implements HasLocalePreference
         'name', 'email', 'password', 'verified', 'room'
     ];
 
-    protected $with = ['educationalInformation'];
+    //protected $with = ['educationalInformation', 'roles', 'faculties', 'workshops'];
 
     /**
      * The attributes that should be hidden for arrays.
@@ -219,6 +219,11 @@ class User extends Authenticatable implements HasLocalePreference
     {
         return $this->belongsToMany(Role::class, 'role_users')
             ->withPivot(['object_id', 'workshop_id'])->using(RoleUser::class);
+    }
+
+    public function roleUsers(): HasMany
+    {
+        return $this->hasMany(RoleUser::class);
     }
 
     /**

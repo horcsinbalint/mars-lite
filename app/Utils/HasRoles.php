@@ -7,6 +7,7 @@ use App\Models\RoleObject;
 use App\Models\Workshop;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 use Illuminate\Support\Facades\Log;
 
@@ -18,6 +19,7 @@ trait HasRoles
     abstract public function roles(): BelongsToMany;
     abstract public static function getById(int $id);
     abstract public function getId(): int;
+    abstract public function roleUsers(): HasMany;
 
     /**
      * Scope a query to only include users with the given role.
@@ -68,23 +70,19 @@ trait HasRoles
         }
 
         // Input is an array of role names => filter based on names
-        if (is_string($allRoles[0])) {
-            return $query->whereHas('roles', function (Builder $query) use ($allRoles) {
-                $query->whereIn('name', $allRoles);
-            }, '=', count($allRoles));
+        foreach ($allRoles as $key => $value) {
+            $role = $value;
+            if(! $value instanceof Role) {
+                $role = Role::get($role);
+            }
+            $query->whereHas('roles', function (Builder $query) use ($role) {
+                $query->where('name', $role->name);
+            });
         }
-
-        // Input is an array of role objects => convert objects to IDs
-        if ($allRoles[0] instanceof Role) {
-            $allRoles = array_map(fn ($role) => $role->id, $allRoles);
-        }
-
-        // Input is an array of role IDs => filter based on IDs
-        return $query->whereHas('roles', function (Builder $query) use ($allRoles) {
-            $query->whereIn('id', $allRoles);
-        }, '=', count($allRoles));
+        return $query;
     }
 
+    private $_currentRoles = null;
 
     /**
      * Decides if the user has any of the given roles.
@@ -105,43 +103,38 @@ trait HasRoles
      */
     public function hasRole(array|int|string|Role $roles): bool
     {
-        $user_id = $this->getId();
-        $hasRoleLambda = function () use($user_id, $roles) {
-            $user_roles = self::getById($user_id)->roles();
+        if($this->_currentRoles == null){
+            $this->_currentRoles = $this->roleUsers->all();
+        }
+        $user_roles = $this->_currentRoles;
+        $hasRoleLambda = function () use($user_roles, $roles) {
             if (!is_array($roles)) {
                 $roles = [$roles];
             }
-    
-            $query = $user_roles;
-            $query->where(function ($query) use ($roles) {
-                foreach ($roles as $key => $value) {
-                    $query->orWhere(function ($query) use ($key, $value) {
-                        if (is_integer($key)) {
-                            //indexed with integers, object not passed
-                            $role = Role::get($value);
-                            $query->where('role_id', $role->id);
-                        } else {
-                            $role = Role::get($key);
-                            $query->where('role_id', $role->id);
-                            if (!is_array($value)) {
-                                $value = [$value];
-                            }
-                            //check if user has any of the objects
-                            $query->where(function ($query) use ($role, $value) {
-                                foreach ($value as $object) {
-                                    $object = $role->getObject($object);
-                                    if ($object instanceof Workshop) {
-                                        $query->orWhere('workshop_id', $object->id);
-                                    } elseif ($object instanceof RoleObject) {
-                                        $query->orWhere('object_id', $object->id);
-                                    }
-                                }
-                            });
+            foreach ($roles as $key => $value) {
+                if (is_integer($key)) {
+                    $role = Role::get($value);
+                    foreach ($user_roles as $user_role) {
+                        if ($user_role->role_id == $role->id) {
+                            return true;
                         }
-                    });
+                    }
+                } else {
+                    $role = Role::get($key);
+                    if (!is_array($value)) {
+                        $value = [$value];
+                    }
+                    foreach($value as $object){
+                        $object = $role->getObject($object);
+                        foreach ($user_roles as $user_role) {
+                            if ($user_role->role_id == $role->id && ($user_role->object_id == $object->id || $user_role->workshop_id == $object->id)) {
+                                return true;
+                            }
+                        }
+                    }
                 }
-            });
-            return $query->exists();
+            }
+            return false;
         };
         return once($hasRoleLambda);
     }

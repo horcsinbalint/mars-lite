@@ -53,6 +53,8 @@ class StudyLine extends Model
         'end'
     ];
 
+    protected $with = ['startSemester', 'endSemester'];
+
     public const TYPES = [
         'bachelor' => 'BA/BSc',
         'master' => 'MA/MSc',

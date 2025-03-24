@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
         $this->call(GeneralAssemblySeeder::class);
         $this->call(ReservationSeeder::class);
         $this->call(AnonymousQuestionSeeder::class);
+        $this->call(SemesterEvaluationSeeder::class);
 
         config(['mail.driver' => env('MAIL_DRIVER')]);
     }

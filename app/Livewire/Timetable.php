@@ -185,7 +185,6 @@ class Timetable extends Component
      */
     public function getBlocksProperty(): array
     {
-        Log::debug(var_export($this->items, true));
         return array_map(
             fn (ReservableItem $item) =>
                 self::listOfBlocks(
@@ -203,9 +202,6 @@ class Timetable extends Component
      */
     private function listOfBlocks(ReservableItem $item, Carbon $from, Carbon $until, bool $isPrintVersion): array
     {
-        \DB::enableQueryLog();
-        Log::debug(var_export([$item->reservationsInSlot($from, $until),
-        $from, $until, \DB::getQueryLog()], true));
         // for some reason, filtering messes up the indices; hence the use of array_values
         $reservations = array_values(
             $item->reservationsInSlot($from, $until)

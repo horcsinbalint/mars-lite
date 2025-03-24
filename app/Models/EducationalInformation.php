@@ -79,6 +79,8 @@ class EducationalInformation extends Model
         'alfonso_passed_by'
     ];
 
+    protected $with = ['studyLines', 'languageExams'];
+
     public function user()
     {
         return $this->belongsTo('App\Models\User');
@@ -104,21 +106,25 @@ class EducationalInformation extends Model
     public function languageExamsAfterAcceptance()
     {
         $acceptanceDate = Carbon::createFromDate($this->year_of_acceptance, 9, 1);
-        return $this->languageExams()->where('date', '>=', $acceptanceDate);
+        $languageExams = [];
+        foreach($this->languageExams as $languageExam) {
+            if($languageExam->date >= $acceptanceDate) {
+                $languageExams[] = $languageExam;
+            }
+        }
+        return $languageExams;
     }
 
     public function languageExamsBeforeAcceptance()
     {
         $acceptanceDate = Carbon::createFromDate($this->year_of_acceptance, 9, 1);
-        return $this->languageExams()->where('date', '<', $acceptanceDate);
-    }
-
-    /**
-     * Whether the user is a senior
-     */
-    public function isSenior(): bool
-    {
-        return $this->user->isSenior();
+        $languageExams = [];
+        foreach($this->languageExams as $languageExam) {
+            if($languageExam->date < $acceptanceDate) {
+                $languageExams[] = $languageExam;
+            }
+        }
+        return $languageExams;
     }
 
     /**
@@ -128,36 +134,43 @@ class EducationalInformation extends Model
      */
     private function isMasterAdmittee(): bool
     {
-        return
-            // there is no study line that:
-            $this->studyLines()
-                // is bachelor or teacher
-                ->where(function ($query) {$query->where('type', 'bachelor')->orWhere('type', 'ot');})
-                ->whereHas('startSemester', function ($query) {
-                    // here, we assume that the admittance semester is always an autumn semester
-                    $query->where('year', '<', $this->year_of_acceptance)
-                        ->orWhere(function ($query) {
-                            $query->where('year', '=', $this->year_of_acceptance)
-                                ->where('part', '=', 1);
-                        });
-                })->where(function ($query) {
-                    // the end semester is either after/equal to the admittance semester
-                    // or null
-                    // here, we also assume that the admittance semester is always an autumn semester
-                    $query->whereHas('endSemester', function ($query) {
-                        $query->where('year', '>=', $this->year_of_acceptance);
-                    })->orWhereNull('end');
-            })->doesntExist();
+        foreach ($this->studyLines as $studyLine) {
+            if ($studyLine->type == 'bachelor' || $studyLine->type == 'ot') {
+                $started_before_or_at_acceptence = false;
+                if($studyLine->startSemester->year < $this->year_of_acceptance) {
+                    $started_before_or_at_acceptence = true;
+                }
+                if($studyLine->startSemester->year == $this->year_of_acceptance
+                && $studyLine->startSemester->part == 1) {
+                    $started_before_or_at_acceptence = true;
+                }
+                $ended_after_acceptance = false;
+                if($studyLine->endSemester) {
+                    if($studyLine->endSemester->year > $this->year_of_acceptance) {
+                        $ended_after_acceptance = true;
+                    }
+                }
+                if($started_before_or_at_acceptence && !$ended_after_acceptance) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
      * Whether the user is exempted from the start
      * (this includes seniors and those who have been admitted during their masters' studies).
      */
-    public function alfonsoExempted(): bool
+    public function alfonsoExempted(bool|null $is_senior = null): bool
     {
-        return $this->isSenior()
-            || $this->isMasterAdmittee();
+        if($is_senior === true) {
+            return true;
+        }
+        if($is_senior === null && $this->user->isSenior()) {
+            return true;
+        }
+        return $this->isMasterAdmittee();
     }
 
     /**
@@ -165,7 +178,7 @@ class EducationalInformation extends Model
      */
     public function alfonsoRequirements(): array
     {
-        $entryLevel = $this->languageExamsBeforeAcceptance;
+        $entryLevel = $this->languageExamsBeforeAcceptance();
 
         $requirements = [];
         # default requirements without any language exams
@@ -173,8 +186,7 @@ class EducationalInformation extends Model
             $requirements[$language] = LanguageExamLevel::B2;
         }
 
-        // @phpstan-ignore-next-line
-        if ($entryLevel->count() >= 2) {
+        if (count($entryLevel) >= 2) {
             foreach ($entryLevel as $exam) {
                 if (!in_array($exam->level, ["C1", "C2"])) {
                     $requirements[$exam->language] = LanguageExamLevel::C1;
@@ -182,9 +194,7 @@ class EducationalInformation extends Model
                     unset($requirements[$exam->language]);
                 }
             }
-        }
-        // @phpstan-ignore-next-line
-        elseif ($entryLevel->count() == 1) {
+        } elseif (count($entryLevel) == 1) {
             foreach ($entryLevel as $exam) {
                 unset($requirements[$exam->language]);
             }
@@ -195,9 +205,9 @@ class EducationalInformation extends Model
     /**
      * @return bool true if the collegist has passed the required language exams
      */
-    public function alfonsoCompleted(): bool
+    public function alfonsoCompleted(bool|null $is_senior = null): bool
     {
-        if ($this->alfonsoExempted()) return true;
+        if ($this->alfonsoExempted($is_senior)) return true;
         foreach ($this->alfonsoRequirements() as $language => $level) {
             if ($this->checkIfPassed($language, $level)) {
                 return true;
@@ -228,10 +238,11 @@ class EducationalInformation extends Model
             $deadline = Carbon::createFromDate($this->year_of_acceptance + 2, 9, 1);
             $levels = ["C1", "C2"];
         }
-        return $this->languageExamsAfterAcceptance()
-            ->where('language', $language)
-            ->whereIn('level', $levels)
-            ->where('date', '<=', $deadline)
-            ->exists();
+        foreach($this->languageExamsAfterAcceptance() as $exam){
+            if ($exam->language == $language && in_array($exam->level, $levels) && $exam->date <= $deadline) {
+                return true;
+            }
+        }
+        return false;
     }
 }

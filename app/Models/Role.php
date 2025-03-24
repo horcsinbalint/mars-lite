@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use InvalidArgumentException;
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * App\Models\Role
  *
@@ -178,11 +180,11 @@ class Role extends Model
 
     /**
      * Returns the role object belonging to the role while checking the validity of the role-object pair.
-     * @param integer|string|null $object roleObject or workshop name/id
+     * @param string|null $object roleObject or workshop name
      * @return RoleObject|Workshop|null
      * @throws InvalidArgumentException
      */
-    public function getObject(int|string|Workshop|RoleObject $object = null): Workshop|RoleObject|null
+    public function getObject(string|Workshop|RoleObject $object = null): Workshop|RoleObject|null
     {
         if ($object instanceof Workshop) {
             return $object;
@@ -190,42 +192,31 @@ class Role extends Model
         if ($object instanceof RoleObject) {
             return $object;
         }
-        /* @var RoleObject|Workshop|null $object */
-        if ($this->has_objects && is_numeric($object)) {
-            $object = $this->objects()->find((int)$object);
-        } elseif ($this->has_objects) {
-            $object = $this->objects()->firstWhere('name', $object);
-        } elseif ($this->has_workshops && is_numeric($object)) {
-            $object = Workshop::find((int)$object);
-        } elseif ($this->has_workshops) {
-            $object = Workshop::firstWhere('name', $object);
-        } elseif (!isset($object)) {
-            $object = null;
-        }
-        if (!$this->isValid($object)) {
+        if (!isset($object)) {
+            return null;
+        } elseif($this->has_objects){
+            if($object instanceof RoleObject){
+                return $object;
+            }
+            foreach($this->objects as $role_object){
+                if($role_object->name === $object){
+                    if($role_object->role_id !== $this->id){
+                        throw new InvalidArgumentException("Role object/workshop '" . $object . "' does not exist for the " . $this->name . " role.");
+                    }
+                    return $role_object;
+                }
+            }
+        }elseif($this->has_workshops){
+            if($object instanceof Workshop){
+                return $object;
+            }
+            return once(function () use($object) {
+                return Workshop::firstWhere('name', $object);
+            });
+        } else {
             throw new InvalidArgumentException("Role object/workshop '" . $object . "' does not exist for the " . $this->name . " role.");
         }
-        return $object;
-    }
-
-    /**
-     * Checks if a role-object pair is valid.
-     * @param RoleObject|Workshop|null $object
-     */
-    public function isValid(Workshop|RoleObject $object = null): bool
-    {
-        if ($this->has_objects
-            && $object instanceof RoleObject
-            && $this->objects()->where('id', $object->id)->exists()) {
-            return true;
-        }
-        if ($this->has_workshops && $object instanceof Workshop) {
-            return true;
-        }
-        if (!$this->has_workshops && !$this->has_objects && !isset($object)) {
-            return true;
-        }
-        return false;
+        return null;
     }
 
 

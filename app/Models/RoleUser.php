@@ -75,13 +75,9 @@ class RoleUser extends Pivot
 
     private static function getTranslatedName($object_id, $workshop_id) : string {
         $getLambda1 = function() use ($object_id){
-            Log::debug($object_id);
-            Log::debug(gettype($object_id));
             return RoleObject::find($object_id)->translatedName;
         };
         $getLambda2 = function() use ($workshop_id){
-            Log::debug($workshop_id);
-            Log::debug(gettype($workshop_id));
             return Workshop::find($workshop_id)->name;
         };
         if($object_id){
