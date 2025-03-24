@@ -155,6 +155,8 @@ class User extends Authenticatable implements HasLocalePreference
         'name', 'email', 'password', 'verified', 'room'
     ];
 
+    protected $with = ['educationalInformation'];
+
     /**
      * The attributes that should be hidden for arrays.
      */

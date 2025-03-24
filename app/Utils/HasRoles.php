@@ -108,7 +108,6 @@ trait HasRoles
         $user_id = $this->getId();
         $hasRoleLambda = function () use($user_id, $roles) {
             $user_roles = self::getById($user_id)->roles();
-            Log::debug(gettype($roles));
             if (!is_array($roles)) {
                 $roles = [$roles];
             }
