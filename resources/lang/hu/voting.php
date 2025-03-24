@@ -1,9 +1,11 @@
 <?php
 
 return [
+    'absentees' => 'Hiányzók',
     'assembly' => 'Közgyűlés',
     'at_least_one_option' => 'Legalább egy opciónak lennie kell!',
     'attendees' => 'Résztvevők',
+    'cannot_determine_attendees' => 'Nem lehet meghatározni a résztvevők listáját, mert még nem volt elég jelenlét-ellenőrzés.',
     'close_question' => 'Kérdés lezárása',
     'close_sitting' => 'Ülés lezárása',
     'closed' => 'Lezárva',

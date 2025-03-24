@@ -554,6 +554,16 @@ class User extends Authenticatable implements HasLocalePreference
                 ->where('id', $semester_id ?? Semester::current()->id);
         });
     }
+    public function scopeActiveOrPassive(Builder $query, ?int $semester_id = null): Builder
+    {
+        return $query->whereHas('semesterStatuses', function ($q) use ($semester_id) {
+            $q->where(function ($q) {
+                $q->where('status', SemesterStatus::ACTIVE)
+                    ->orWhere('status', SemesterStatus::PASSIVE);
+            })
+                ->where('id', $semester_id ?? Semester::current()->id);
+        });
+    }
 
     /**
      * Scope a query to only include resident users.

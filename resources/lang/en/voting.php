@@ -1,9 +1,11 @@
 <?php
 
 return [
+    'absentees' => 'Absentees',
     'assembly' => 'General Assembly',
     'at_least_one_option' => 'You have to provide at least one option.',
     'attendees' => 'Attendees',
+    'cannot_determine_attendees' => 'There were not enough present checks to determine the list of attendees.',
     'close_question' => 'Close question',
     'close_sitting' => 'Close general assembly',
     'closed' => 'Closed',

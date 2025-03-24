@@ -256,6 +256,18 @@ class Semester extends Model
         })->get();
     }
 
+    public static function fromDate(Carbon $time){
+        if ($time->month >= self::START_OF_SPRING_SEMESTER && $time->month <= self::END_OF_SPRING_SEMESTER) {
+            $part = 2;
+            $year = $time->year - 1;
+        } else {
+            $part = 1;
+            // This assumes that the semester ends in the new year.
+            $year = $time->month <= self::END_OF_AUTUMN_SEMESTER ? $time->year - 1 : $time->year;
+        }
+        return Semester::getOrCreate($year, $part);
+    }
+
     /**
      * Returns the current semester.
      * There is always a "current" semester. If there is not in the database, this function creates it.
@@ -264,17 +276,7 @@ class Semester extends Model
     public static function current(): Semester
     {
         $today = Carbon::today()->format('Ymd');
-        $now = Carbon::now();
-        if ($now->month >= self::START_OF_SPRING_SEMESTER && $now->month <= self::END_OF_SPRING_SEMESTER) {
-            $part = 2;
-            $year = $now->year - 1;
-        } else {
-            $part = 1;
-            // This assumes that the semester ends in the new year.
-            $year = $now->month <= self::END_OF_AUTUMN_SEMESTER ? $now->year - 1 : $now->year;
-        }
-        $current = Semester::getOrCreate($year, $part);
-        return $current;
+        return self::fromDate(Carbon::now());
     }
 
     /**

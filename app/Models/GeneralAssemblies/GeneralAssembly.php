@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 use App\Models\Question;
 use App\Models\User;
+use App\Models\Semester;
 use Carbon\Carbon;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -117,6 +118,18 @@ class GeneralAssembly extends Model
             'presenceChecks',
             fn (Builder $query) => $query->where('presence_checks.general_assembly_id', $this->id),
             '>=',
+            $this->getPresenceChecksNeededAttribute(),
+        )->get();
+    }
+    public function absentees(): Collection|array
+    {
+        if ($this->getPresenceChecksNeededAttribute() == 0) {
+            return collect([]);
+        }
+        return User::activeOrPassive(Semester::fromDate($this->opened_at)->id)->whereHas(
+            'presenceChecks',
+            fn (Builder $query) => $query->where('presence_checks.general_assembly_id', $this->id),
+            '<',
             $this->getPresenceChecksNeededAttribute(),
         )->get();
     }
