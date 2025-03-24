@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * RoleUser pivot model. Represents a role assigned to a user with a roleObject or Workshop in the pivot.
  *
@@ -71,6 +73,26 @@ class RoleUser extends Pivot
         return $this->belongsTo(Role::class);
     }
 
+    private static function getTranslatedName($object_id, $workshop_id) : string {
+        $getLambda1 = function() use ($object_id){
+            Log::debug($object_id);
+            Log::debug(gettype($object_id));
+            return RoleObject::find($object_id)->translatedName;
+        };
+        $getLambda2 = function() use ($workshop_id){
+            Log::debug($workshop_id);
+            Log::debug(gettype($workshop_id));
+            return Workshop::find($workshop_id)->name;
+        };
+        if($object_id){
+            return once($getLambda1);
+        }
+        if($workshop_id){
+            return once($getLambda2);
+        }
+        return '';
+    }
+
     /**
      * Get the role object's translated_name attribute.
      *
@@ -78,15 +100,10 @@ class RoleUser extends Pivot
      */
     public function translatedName(): Attribute
     {
+        $translatedName = RoleUser::getTranslatedName($this->object_id, $this->workshop_id);
         return Attribute::make(
-            get: function (): string {
-                if ($this->object_id) {
-                    return $this->object->translatedName;
-                }
-                if ($this->workshop_id) {
-                    return $this->workshop->name;
-                }
-                return '';
+            get: function () use ($translatedName): string {
+                return $translatedName;
             }
         );
     }

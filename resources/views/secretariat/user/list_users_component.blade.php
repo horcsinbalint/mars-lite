@@ -70,7 +70,6 @@
             </div>
 
             @forelse($this->users as $user)
-                @can('view', $user)
                     <div class="row">
                         <div class="col s12 xl3">
                             <a href="{{ route('users.show', ['user' => $user->id]) }}"><b>{{ $user->name }}</b></a><br>
@@ -94,24 +93,18 @@
                         </div>
                         <!-- Status -->
                         <div class="col s12 xl1">
-                            @if($user->isCollegist())
-                                @can('view', $user)
-                                @php
-                                    $status = $user->getStatus();
-                                @endphp
+                            @php
+                                $status = $user->getStatus();
+                            @endphp
+                            @if($status?->status)
                                 <span class="new badge {{ \App\Models\SemesterStatus::color($status?->status) }} right" data-badge-caption="">
-                                    <b> @if($status?->status)
+                                    <b> 
                                         {{ $status->translatedStatus()}}
-                                        @else
-                                        @lang("user.no_status")
-                                        @endif
                                     </b>
                                 </span>
-                                @endcan
                             @endif
                         </div>
                     </div>
-                @endcan
             @empty
             Nincs a megadott feltételeknek megfelelő felhasználó, vagy nincs jogosultsága megtekinteni.
             @endforelse

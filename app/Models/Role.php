@@ -156,21 +156,24 @@ class Role extends Model
      */
     public static function get(Role|string|int $role): Role
     {
-        if ($role instanceof Role) {
+        $getLambda = function () use($role){
+            if ($role instanceof Role) {
+                return $role;
+            }
+            
+            if (is_numeric($role)) {
+                $role = Role::find((int)$role);
+            } else {
+                $role = Role::where('name', $role)->first();
+            }
+
+            if (!$role) {
+                throw new InvalidArgumentException('Role not found: ' . $role);
+            }
+
             return $role;
-        }
-        
-        if (is_numeric($role)) {
-            $role = Role::find((int)$role);
-        } else {
-            $role = Role::where('name', $role)->first();
-        }
-
-        if (!$role) {
-            throw new InvalidArgumentException('Role not found: ' . $role);
-        }
-
-        return $role;
+        };
+        return once($getLambda);
     }
 
     /**

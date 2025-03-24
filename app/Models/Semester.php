@@ -342,15 +342,18 @@ class Semester extends Model
      */
     public static function getOrCreate($year, $part): Semester
     {
-        if (!in_array($part, [1, 2])) {
-            throw new InvalidArgumentException("The semester's part is not 1 or 2.");
-        }
-        $semester = Semester::firstOrCreate([
-            'year' => $year,
-            'part' => (string)$part,
-        ]);
-
-        return $semester;
+        $getOrCreateLambda = function () use ($year, $part) {
+            if (!in_array($part, [1, 2])) {
+                throw new InvalidArgumentException("The semester's part is not 1 or 2.");
+            }
+            $semester = Semester::firstOrCreate([
+                'year' => $year,
+                'part' => (string)$part,
+            ]);
+    
+            return $semester;
+        };
+        return once($getOrCreateLambda);
     }
 
 

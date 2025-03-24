@@ -741,8 +741,11 @@ class User extends Authenticatable implements HasLocalePreference
         if ($this->verified == false) {
             return $this->roles()->where('role_id', Role::collegist()->id)->exists();
         }
-
-        return $this->hasRole(Role::COLLEGIST) || ($alumni === true && $this->hasRole(Role::ALUMNI));
+        $accepted_roles = [Role::COLLEGIST];
+        if($alumni){
+            $accepted_roles[] = Role::ALUMNI;
+        }
+        return $this->hasRole($accepted_roles);
     }
 
     /**
