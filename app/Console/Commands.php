@@ -16,10 +16,9 @@ class Commands
         if (!filter_var($router->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
             throw new \InvalidArgumentException("Invalid IP address: " . $router->ip);
         }
-
-        $process = Process::fromShellCommandline(config('commands.ping') . " $router->ip -c 1 | grep 'error\|unreachable'");
+        $process = new Process([config('commands.nmap'), $router->ip, "-sP", "-oG", "-"]);
         $process->run(log: false);
-        $result = $process->getOutput(debugOutput: rand(1, 10) > 9 ? "error" : '');
+        $result = $process->getOutput(debugOutput: rand(1, 10) > 9 ? "error" : 'Status: Up');
         return $result;
     }
 
