@@ -7,7 +7,7 @@
             <td>{{ $general_assembly->opened_at->format('Y-m-d') }}</td>
             <td>
                 @if($general_assembly->isAttended($user))
-                    <span class="green-text">Részt vettél</span>
+                    <span class="green-text">Részt vettél / igazoltan voltál távol</span>
                 @else
                     <span class="red-text">Nem vettél részt</span>
                 @endif
