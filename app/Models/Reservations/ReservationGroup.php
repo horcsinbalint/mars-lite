@@ -79,11 +79,18 @@ class ReservationGroup extends Model
         $lastDay->minute = $groupFrom->minute;
 
         DB::transaction(function () use ($currentStart, $lastDay, $defaultDuration) {
+            $counter = 0;
             while ($currentStart <= $lastDay) {
+                $counter++;
+                if ($counter > 100) {
+                    throw new ReservationConflictException(
+                        __("The maximum number of reservations in the group would exceed the limit.")
+                    );
+                }
                 $currentEnd = $currentStart->copy()->addMinutes($defaultDuration);
                 $other = $this->groupItem->reservationsInSlot(
-                    CarbonImmutable::make($currentStart),
-                    CarbonImmutable::make($currentEnd)
+                    $currentStart->copy(),
+                    $currentEnd->copy()
                 )->first();
                 if (!is_null($other)) {
                     throw new ReservationConflictException(
