@@ -16,10 +16,10 @@
         </div>
     </div>
 @endforeach
-@can('updateAnyPermission', $user)
+@can('updateSomePermissions', $user)
     <div class="divider" style="margin-bottom: 15px"></div>
     @foreach (App\Models\Role::all()->sortBy(function ($r, $key){return __('role.' . $r['name']);}) as $role)
-        @can('updateAnyPermission', [$user, $role])
+        @can('updatePermission', [$user, $role, null, true])
             @if(!$user->roles->contains($role) || $role->has_objects || $role->has_workshops)
                 <form action="{{ route('users.roles.add', ['user' => $user->id, 'role'=>$role->id]) }}" method="post">
                     @csrf

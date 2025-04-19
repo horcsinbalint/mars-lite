@@ -53,7 +53,7 @@ class CommunityServicePolicy
      */
     public function approveAny(User $user)
     {
-        return $user->isStudentCouncilMember();
+        return $user->isStudentCouncilOfficial();
     }
 
     /**

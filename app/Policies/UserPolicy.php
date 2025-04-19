@@ -31,7 +31,7 @@ class UserPolicy
     {
         return $user->isCollegeMaintainer() ||
                $user->isStudentCouncilSecretary() ||
-               $user->isStudentCouncilMember();
+               $user->isStudentCouncilOfficial();
     }
 
     /**
@@ -80,7 +80,7 @@ class UserPolicy
         }
         if ($target->isCollegist()) {
             return $user->isCollegeLeader() ||
-                     $user->isStudentCouncilMember() ||
+                     $user->isStudentCouncilOfficial() ||
                      $user->isStudentCouncilSecretary() ||
                      $target->workshops
                     ->intersect($user->roleWorkshops)
@@ -100,10 +100,10 @@ class UserPolicy
      * @param Role|null $role
      * @return bool
      */
-    public function updateAnyPermission(User $user): bool
+    public function updateSomePermissions(User $user): bool
     {
         return $user->isCollegeMaintainer() ||
-                $user->isStudentCouncilMember() ||
+                $user->isStudentCouncilOfficial() ||
                 $user->isStudentCouncilSecretary() ||
                 $user->isWorkshopAdministrator() ||
                 $user->isWorkshopLeader();

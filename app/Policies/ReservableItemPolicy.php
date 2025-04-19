@@ -40,7 +40,7 @@ class ReservableItemPolicy
                     return config('custom.room_reservation_open')
                         && ($user->isWorkshopLeader()
                             || $user->isWorkshopAdministrator()
-                            || $user->isStudentCouncilMember()
+                            || $user->isStudentCouncilOfficial()
                         );
                 default:
                     throw new \Exception("unknown ReservableItemType");

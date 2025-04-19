@@ -162,12 +162,9 @@ class EducationalInformation extends Model
      * Whether the user is exempted from the start
      * (this includes seniors and those who have been admitted during their masters' studies).
      */
-    public function alfonsoExempted(bool|null $is_senior = null): bool
+    public function alfonsoExempted(): bool
     {
-        if($is_senior === true) {
-            return true;
-        }
-        if($is_senior === null && $this->user->isSenior()) {
+        if($this->user->isSenior()) {
             return true;
         }
         return $this->isMasterAdmittee();
@@ -205,9 +202,9 @@ class EducationalInformation extends Model
     /**
      * @return bool true if the collegist has passed the required language exams
      */
-    public function alfonsoCompleted(bool|null $is_senior = null): bool
+    public function alfonsoCompleted(): bool
     {
-        if ($this->alfonsoExempted($is_senior)) return true;
+        if ($this->alfonsoExempted()) return true;
         foreach ($this->alfonsoRequirements() as $language => $level) {
             if ($this->checkIfPassed($language, $level)) {
                 return true;

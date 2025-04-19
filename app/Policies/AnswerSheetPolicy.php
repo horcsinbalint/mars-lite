@@ -18,7 +18,7 @@ class AnswerSheetPolicy
     public function administer(User $user): bool
     {
         return $user->isAdmin()
-          || $user->isStudentCouncilMember()
+          || $user->isStudentCouncilOfficial()
           || $user->isStudentCouncilSecretary();
     }
 }

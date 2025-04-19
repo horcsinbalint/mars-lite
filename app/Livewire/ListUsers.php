@@ -45,8 +45,16 @@ class ListUsers extends Component
     public function getUsersProperty()
     {
         return $this->createFilteredQuery()
-            ->with(['roles', 'workshops', 'educationalInformation', 'semesterStatuses'])
-            ->orderBy('name')->get();
+        ->with([
+            'roleUsers.object',
+            'roleUsers.workshop',
+            'roleUsers.role',
+            'workshops',
+            'educationalInformation',
+            'semesterStatuses'
+        ])
+        ->orderBy('name')
+        ->get();
     }
 
     /**

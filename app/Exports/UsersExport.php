@@ -25,13 +25,14 @@ class UsersExport implements WithMultipleSheets, WithDefaultStyles
     public function sheets(): array
     {
         $sheets = [
-            new CollegistsExport($this->includedUsers),
-            new StatusesExport($this->includedUsers),
+            //new CollegistsExport($this->includedUsers),
+            //new StatusesExport($this->includedUsers),
         ];
 
         if(user()->can('viewSemesterEvaluation', User::class)) {
             $sheets[] = new SemesterEvaluationExport($this->includedUsers);
-            /*if(user()->isStudentCouncil()) {
+            /*if(user()->isStudentCouncilOfficial() ||
+               user()->isStudentCouncilSecretary()) {
                 $sheets[] = new StudentsCouncilFeedback($this->includedUsers);
             }*/
         }

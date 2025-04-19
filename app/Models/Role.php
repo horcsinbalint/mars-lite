@@ -45,7 +45,7 @@ class Role extends Model
     public const SECRETARY = 'secretary';
     public const DIRECTOR = 'director';
     public const STAFF = 'staff';
-    public const LOCALE_ADMIN = 'locale-admin';
+    public const LOCALE_ADMIN = 'locale-admin'; //TODO: delete role
     public const STUDENT_COUNCIL = 'student-council';
     public const STUDENT_COUNCIL_SECRETARY = 'student-council-secretary';
     public const BOARD_OF_TRUSTEES_MEMBER = 'board-of-trustees-member';
@@ -306,5 +306,25 @@ class Role extends Model
             self::SENIOR => 'teal',
             default => 'grey',
         };
+    }
+
+    /**
+     * Checks if a role-object pair is valid.
+     * @param RoleObject|Workshop|null $object
+     */
+    public function isValid(Workshop|RoleObject $object = null): bool
+    {
+        if ($this->has_objects
+            && $object instanceof RoleObject
+            && $this->objects()->where('id', $object->id)->exists()) {
+            return true;
+        }
+        if ($this->has_workshops && $object instanceof Workshop) {
+            return true;
+        }
+        if (!$this->has_workshops && !$this->has_objects && !isset($object)) {
+            return true;
+        }
+        return false;
     }
 }

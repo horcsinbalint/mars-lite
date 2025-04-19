@@ -27,9 +27,15 @@ class SemesterEvaluationExport implements FromCollection, WithTitle, WithMapping
         $this->evaluations = SemesterEvaluation::query()
             ->where('semester_id', $this->semester?->id)
             ->whereIn('user_id', $users)
-            ->with(['user' => function ($query) {
-            $query->with('educationalInformation', 'faculties', 'semesterStatuses', 'workshops', 'roles', 'communityServiceRequests');
-            }])
+            ->with([
+                'user.educationalInformation.languageExams',
+                'user.faculties',
+                'user.semesterStatuses',
+                'user.workshops',
+                'user.roleUsers',
+                'user.communityServiceRequests',
+                'user.presenceChecks.generalAssembly'
+            ])
             ->get()
             ->sortBy(fn ($evaluation) => $evaluation->user->name);
     }
@@ -96,15 +102,15 @@ class SemesterEvaluationExport implements FromCollection, WithTitle, WithMapping
             $user->getStatus($next_semester)?->translatedStatus(),
             $evaluation->will_write_request ? "Igen" : '',
             implode(" \n", array_map(function ($exam) {
-                    return implode(", ", [__('role.'.$exam->language), $exam->level, $exam->type, $exam->date->format('Y-m')]);
-                }, $user->educationalInformation?->languageExamsBeforeAcceptance() ?? [])),
+                return implode(", ", [__('role.'.$exam->language), $exam->level, $exam->type, $exam->date->format('Y-m')]);
+            }, $user->educationalInformation?->languageExamsBeforeAcceptance() ?? [])),
                 implode(" \n", array_map(function ($exam) {
                     return implode(", ", [__('role.'.$exam->language), $exam->level, $exam->type, $exam->date->format('Y-m')]);
                 }, $user->educationalInformation?->languageExamsAfterAcceptance() ?? [])),
                 ($user->educationalInformation?->alfonso_language ?
                     __('role.'.$user->educationalInformation?->alfonso_language) . " " . $user->educationalInformation?->alfonso_desired_level
                     : ""),
-                ($user->educationalInformation?->alfonsoCompleted($user->isSenior()) ?? false)   //Senior status cannot be loaded easily there
+                ($user->educationalInformation?->alfonsoCompleted() ?? false)   //Senior status cannot be loaded easily there
                     ? 'Igen'
                     : (($user->educationalInformation?->alfonsoCanBeCompleted() ?? true) ? "Folyamatban" : "Nem"),
             $evaluation->alfonso_note,
@@ -117,7 +123,7 @@ class SemesterEvaluationExport implements FromCollection, WithTitle, WithMapping
             })->implode(" \n"),
             $evaluation->general_assembly_note,
             $user->roles()->whereIn('name', Role::STUDENT_POSTION_ROLES)->get()->map(function ($role) {
-                if($role->has_objects || $role->has_workshops) {
+                if ($role->has_objects || $role->has_workshops) {
                     return $role->translatedName . " (" .$role->pivot->translatedName. ")";
                 } else {
                     return $role->translatedName;

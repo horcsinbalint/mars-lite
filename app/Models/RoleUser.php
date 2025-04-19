@@ -39,7 +39,7 @@ class RoleUser extends Pivot
     /**
      * Always eager load workshop and object relations.
      */
-    protected $with = ['workshop', 'object'];
+    protected $with = ['workshop', 'object', 'role'];
 
     /**
      * Get the belonging workshop.
@@ -73,22 +73,6 @@ class RoleUser extends Pivot
         return $this->belongsTo(Role::class);
     }
 
-    private static function getTranslatedName($object_id, $workshop_id) : string {
-        $getLambda1 = function() use ($object_id){
-            return RoleObject::find($object_id)->translatedName;
-        };
-        $getLambda2 = function() use ($workshop_id){
-            return Workshop::find($workshop_id)->name;
-        };
-        if($object_id){
-            return once($getLambda1);
-        }
-        if($workshop_id){
-            return once($getLambda2);
-        }
-        return '';
-    }
-
     /**
      * Get the role object's translated_name attribute.
      *
@@ -96,10 +80,15 @@ class RoleUser extends Pivot
      */
     public function translatedName(): Attribute
     {
-        $translatedName = RoleUser::getTranslatedName($this->object_id, $this->workshop_id);
+        if($this->object_id){
+            $translated_name = $this->object->translatedName;
+        }
+        if($this->workshop_id){
+            $translated_name = $this->workshop->name;
+        }
         return Attribute::make(
-            get: function () use ($translatedName): string {
-                return $translatedName;
+            get: function () use ($translated_name): string {
+                return $translated_name;
             }
         );
     }

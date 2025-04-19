@@ -39,8 +39,8 @@ class Block
         if ($from >= $until) {
             throw new \InvalidArgumentException("start date of block not earlier than end date: $from, $until");
         } else {
-            $this->from = $from;
-            $this->until = $until;
+            $this->from = $from->copy();
+            $this->until = $until->copy();
             $this->reservation_id = $reservation_id;
         }
     }
@@ -54,7 +54,7 @@ class Block
         if ($from >= $this->until) {
             throw new \InvalidArgumentException("new start date is not earlier than current end date: $from, {$this->until}");
         } else {
-            $this->from = $from;
+            $this->from = $from->copy();
         }
     }
     /**
@@ -66,7 +66,7 @@ class Block
         if ($until <= $this->from) {
             throw new \InvalidArgumentException("new end date is not later than current start date: {$this->from}, $until");
         } else {
-            $this->until = $until;
+            $this->until = $until->copy();
         }
     }
     /**
@@ -74,14 +74,14 @@ class Block
      */
     public function getFrom(): Carbon
     {
-        return $this->from;
+        return $this->from->copy();
     }
     /**
      * Returns the end date.
      */
     public function getUntil(): Carbon
     {
-        return $this->until;
+        return $this->until->copy();
     }
     /**
      * Returns the reservation id.
@@ -93,7 +93,7 @@ class Block
 
     public function lengthInSeconds(): int
     {
-        return $this->from->diffInSeconds($this->until);
+        return $this->from->diffInSeconds($this->until, false);
     }
 
     /**
